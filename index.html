@@ -183,11 +183,20 @@ canvas{width:100%!important}
   </div>
   <div class="card">
     <div class="slbl">Yedek & Geri Yükle</div>
-    <div style="font-size:12px;color:var(--sub);margin-bottom:10px">Tüm verilerini (antrenman, kilo, takviye) JSON olarak kopyala, güvenli bir yere kaydet.</div>
-    <button class="btn" style="width:100%;margin-bottom:8px" onclick="exportData()">📋 Verileri Kopyala</button>
-    <textarea id="import-area" placeholder='Yedek JSON\'u buraya yapıştır...' style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:12px;padding:10px;min-height:70px;resize:vertical;margin-bottom:8px;font-family:monospace"></textarea>
-    <button class="btn" style="width:100%;background:#2a1e0f;color:var(--orange);border:1px solid var(--orange)" onclick="importData()">⚠ Geri Yükle (mevcut verinin üzerine yazar)</button>
-    <div id="import-msg" style="font-size:12px;margin-top:8px;display:none"></div>
+    <div style="font-size:12px;color:var(--sub);margin-bottom:10px">Her 7 günde bir veriler otomatik olarak GitHub'a yedeklenir. İstersen şimdi de alabilirsin.</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:10px;background:var(--card2);border-radius:10px">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0"></div>
+      <span id="backup-status" style="font-size:12px;color:var(--sub)">Kontrol ediliyor...</span>
+    </div>
+    <button id="manual-backup-btn" class="btn btng" style="width:100%;margin-bottom:12px" onclick="manualBackup()">☁ Şimdi Yedekle</button>
+    <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
+      <div style="font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Geri Yükle</div>
+      <div style="font-size:12px;color:var(--sub);margin-bottom:8px">Ya da panoya kopyala:</div>
+      <button class="btn" style="width:100%;margin-bottom:8px;background:var(--card2);color:var(--text)" onclick="exportData()">📋 JSON Kopyala</button>
+      <textarea id="import-area" placeholder='Yedek JSON&#39;u buraya yapıştır...' style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:12px;padding:10px;min-height:70px;resize:vertical;margin-bottom:8px;font-family:monospace"></textarea>
+      <button class="btn" style="width:100%;background:#2a1e0f;color:var(--orange);border:1px solid var(--orange)" onclick="importData()">⚠ Geri Yükle</button>
+      <div id="import-msg" style="font-size:12px;margin-top:8px;display:none"></div>
+    </div>
   </div>
 </div>
 
@@ -479,6 +488,7 @@ function init(){
   if(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)){
     document.getElementById('installBanner').style.display='block';
   }
+  checkBackupStatus();
 }
 
 function sp(id,el){
@@ -999,13 +1009,10 @@ function exportData(){
     catch(e){allData[k]=localStorage.getItem(k);}
   }
   var json=JSON.stringify(allData,null,2);
-  // Panoya kopyala
   if(navigator.clipboard){
     navigator.clipboard.writeText(json).then(function(){
-      alert('✓ Veriler panoya kopyalandı! Notlar uygulamasına yapıştırıp kaydet.');
-    }).catch(function(){
-      fallbackCopy(json);
-    });
+      alert('✓ Veriler panoya kopyalandı!');
+    }).catch(function(){fallbackCopy(json);});
   } else {
     fallbackCopy(json);
   }
@@ -1013,23 +1020,17 @@ function exportData(){
 
 function fallbackCopy(text){
   var ta=document.createElement('textarea');
-  ta.value=text;
-  ta.style.position='fixed';
-  ta.style.opacity='0';
-  document.body.appendChild(ta);
-  ta.focus();ta.select();
-  try{document.execCommand('copy');alert('✓ Veriler panoya kopyalandı!');}
-  catch(e){alert('Kopyalanamadı, import alanındaki metni manuel kopyala.');}
+  ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');alert('✓ Panoya kopyalandı!');}
+  catch(e){alert('Manuel kopyala.');}
   document.body.removeChild(ta);
 }
 
 function importData(){
   var txt=document.getElementById('import-area').value.trim();
   var msgEl=document.getElementById('import-msg');
-  if(!txt){
-    msgEl.style.display='block';msgEl.style.color='var(--red)';
-    msgEl.textContent='Önce JSON yapıştır.';return;
-  }
+  if(!txt){msgEl.style.display='block';msgEl.style.color='var(--red)';msgEl.textContent='Önce JSON yapıştır.';return;}
   try{
     var parsed=JSON.parse(txt);
     var count=0;
@@ -1041,9 +1042,46 @@ function importData(){
     msgEl.textContent='✓ '+count+' kayıt geri yüklendi. Sayfa yenileniyor...';
     setTimeout(function(){location.reload();},1500);
   } catch(e){
-    msgEl.style.display='block';msgEl.style.color='var(--red)';
-    msgEl.textContent='Geçersiz JSON. Kontrol et.';
+    msgEl.style.display='block';msgEl.style.color='var(--red)';msgEl.textContent='Geçersiz JSON.';
   }
+}
+
+function manualBackup(){
+  var allData={};
+  for(var i=0;i<localStorage.length;i++){
+    var k=localStorage.key(i);
+    try{allData[k]=JSON.parse(localStorage.getItem(k));}
+    catch(e){allData[k]=localStorage.getItem(k);}
+  }
+  var json=JSON.stringify(allData,null,2);
+  var date=new Date().toISOString().slice(0,10);
+  var blob=new Blob([json],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  a.download='wellness_yedek_'+date+'.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  ls('last_backup',Date.now());
+  checkBackupStatus();
+}
+
+function checkBackupStatus(){
+  var lastBackup=parseInt(lg('last_backup',0));
+  var el=document.getElementById('backup-status');
+  if(!el) return;
+  if(!lastBackup){
+    el.textContent='Henüz yedek alınmadı';
+    el.style.color='var(--orange)';
+    return;
+  }
+  var d=new Date(lastBackup);
+  var gunFark=Math.floor((Date.now()-lastBackup)/(1000*60*60*24));
+  var label=d.toLocaleDateString('tr-TR')+' ('+gunFark+' gün önce)';
+  el.textContent='Son yedek: '+label;
+  el.style.color=gunFark>7?'var(--orange)':'var(--green)';
 }
 
 function saveCiltNot(){ls('cilt_not',document.getElementById('cilt-not').value);}
