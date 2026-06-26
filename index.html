@@ -532,12 +532,12 @@ input{-webkit-appearance:none}
     <div id="foto-modal-ogun-lbl" style="font-size:13px;color:var(--sub);margin-bottom:12px"></div>
 
     <!-- Fotoğraf yükleme alanı -->
-    <div id="foto-upload-alan" style="border:2px dashed var(--border);border-radius:14px;padding:24px;text-align:center;cursor:pointer;margin-bottom:12px" onclick="document.getElementById('foto-file-input').click()">
+    <div id="foto-upload-alan" style="border:2px dashed var(--border);border-radius:14px;padding:24px;text-align:center;cursor:pointer;margin-bottom:12px;position:relative;overflow:hidden" onclick="iosFileAc()">
       <div style="font-size:32px;margin-bottom:8px">📷</div>
       <div style="font-size:14px;font-weight:600;margin-bottom:4px">Fotoğraf Seç</div>
-      <div style="font-size:12px;color:var(--sub)">Tabağının fotoğrafını çek veya galeriden seç</div>
+      <div style="font-size:12px;color:var(--sub)">Galeriden seç veya kamera ile çek</div>
+      <input type="file" id="foto-file-input" accept="image/*" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer" onchange="fotoyuAnalizeEt(this)">
     </div>
-    <input type="file" id="foto-file-input" accept="image/*" style="display:none" onchange="fotoyuAnalizeEt(this)">
 
     <!-- Önizleme -->
     <div id="foto-onizleme" style="display:none;margin-bottom:12px">
@@ -1838,6 +1838,11 @@ function silGercek(mi){
 
 // ---- FOTOĞRAF ANALİZİ ----
 var aktifOgunMi=null, aktifAnalizSonuc=null;
+
+function iosFileAc(){
+  // iOS PWA'da input click çalışmıyor, input'u overlay yaparak çözdük
+  // Bu fonksiyon artık gerekli değil ama var olsun
+}
 
 function acFotoModal(mi, ogunAdi){
   aktifOgunMi=mi;
