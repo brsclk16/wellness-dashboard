@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Fitness – Baris</title>
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wellness">
+<link rel="manifest" href="manifest.json">
 <style>
 :root{--bg:#0f0f0f;--card:#1a1a1a;--card2:#222;--border:#2a2a2a;--text:#f0f0f0;--sub:#888;--green:#4ade80;--blue:#60a5fa;--orange:#fb923c;--red:#f87171;--purple:#c084fc}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -2707,6 +2712,19 @@ function saveCiltNot(){ls('cilt_not',document.getElementById('cilt-not').value);
 function loadCiltNot(){document.getElementById('cilt-not').value=lg('cilt_not','');}
 
 init();
+
+// Service Worker kayıt
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('/wellness-dashboard/sw.js')
+      .then(function(reg){
+        console.log('SW kayıtlı:', reg.scope);
+      })
+      .catch(function(err){
+        console.log('SW hatası:', err);
+      });
+  });
+}
 </script>
 </body>
 </html>
