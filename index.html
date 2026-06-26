@@ -92,7 +92,8 @@ canvas{width:100%!important}
   </div>
   <div class="dscr" id="dscr"></div>
 
-  <!-- Uyku & Enerji -->
+  <!-- Sabah Özeti -->
+  <div id="sabah-ozeti-kart" class="card" style="margin-bottom:12px;border:1px solid #2a2a3a"></div>
   <div class="card" style="margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div class="slbl" style="margin-bottom:0">😴 Uyku & Enerji</div>
@@ -211,6 +212,10 @@ canvas{width:100%!important}
         <input type="number" id="olc-bel" placeholder="örn: 90" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:8px 10px" step="0.5">
       </div>
       <div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:4px">Boyun (cm)</div>
+        <input type="number" id="olc-boyun" placeholder="örn: 38" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:8px 10px" step="0.5">
+      </div>
+      <div>
         <div style="font-size:11px;color:var(--sub);margin-bottom:4px">Göğüs (cm)</div>
         <input type="number" id="olc-gogus" placeholder="örn: 100" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:8px 10px" step="0.5">
       </div>
@@ -254,6 +259,13 @@ canvas{width:100%!important}
     <div style="font-size:12px;color:var(--sub);margin-bottom:10px">Haftalık öğün uyumu % · Kilo değişimiyle ilişkisi</div>
     <div style="position:relative;height:180px"><canvas id="uyum-ch"></canvas></div>
     <div id="uyum-stats" style="margin-top:10px"></div>
+  </div>
+  <div class="card">
+    <div class="slbl">Vücut Kompozisyonu — Navy Method</div>
+    <div style="font-size:12px;color:var(--sub);margin-bottom:12px">Bel + boyun ölçüsünden yağ oranı tahmini (US Navy formülü)</div>
+    <div id="kompo-ozet" style="margin-bottom:12px"></div>
+    <div style="position:relative;height:180px"><canvas id="kompo-ch"></canvas></div>
+    <div id="kompo-stats" style="margin-top:10px"></div>
   </div>
   <div class="card">
     <div class="slbl">Yedek & Geri Yükle</div>
@@ -705,6 +717,7 @@ function init(){
   renderSu();
   renderUyku();
   renderOlcGrafikBtns();
+  renderSabahOzeti();
   var simdi=new Date();
   if(simdi.getDay()===0 && simdi.getHours()>=18){
     var ozetKey='hafta_ozet_gosterildi_'+cWk;
@@ -1238,7 +1251,7 @@ function sp(id,el){
   var map={g:'pg',a:'pa',k:'pk',t:'pt',ci:'pci',g2:'pg2'};
   document.getElementById(map[id]).classList.add('on');
   el.classList.add('on');
-  if(id==='k'){renderK();renderOlcGrafik();renderUyumGrafik();}
+  if(id==='k'){renderK();renderOlcGrafik();renderUyumGrafik();renderKompo();}
   if(id==='ci'){showCilt('am',document.getElementById('cilt-am'));loadCiltNot();}
   if(id==='g2') renderLiftChart(cLift);
   if(id==='t') renderSupChecks();
@@ -1924,22 +1937,213 @@ function renderK(){
 
 function saveOlcu(){
   var bel=document.getElementById('olc-bel').value;
+  var boyun=document.getElementById('olc-boyun').value;
   var gogus=document.getElementById('olc-gogus').value;
   var kalca=document.getElementById('olc-kalca').value;
   var kol=document.getElementById('olc-kol').value;
-  if(!bel&&!gogus&&!kalca&&!kol) return;
+  if(!bel&&!boyun&&!gogus&&!kalca&&!kol) return;
   var olcLog=lg('olc_log',[]);
   var idx=-1;
   for(var i=0;i<olcLog.length;i++){if(olcLog[i].w===cWk){idx=i;break;}}
-  var entry={w:cWk,bel:bel,gogus:gogus,kalca:kalca,kol:kol};
+  var entry={w:cWk,bel:bel,boyun:boyun,gogus:gogus,kalca:kalca,kol:kol};
   if(idx>=0) olcLog[idx]=entry; else olcLog.push(entry);
   ls('olc_log',olcLog);
   document.getElementById('olc-bel').value='';
+  document.getElementById('olc-boyun').value='';
   document.getElementById('olc-gogus').value='';
   document.getElementById('olc-kalca').value='';
   document.getElementById('olc-kol').value='';
   renderK();
   alert('Ölçüler kaydedildi!');
+}
+
+// ---- NAVY METHOD VE KOMPOZİSYON ----
+function navyYagOrani(bel, boyun, boy){
+  // US Navy Body Fat Formula (erkek)
+  // %BF = 86.010 × log10(bel - boyun) - 70.041 × log10(boy) + 36.76
+  if(!bel||!boyun||!boy||parseFloat(bel)<=parseFloat(boyun)) return null;
+  var bf = 86.010*Math.log10(parseFloat(bel)-parseFloat(boyun)) - 70.041*Math.log10(parseFloat(boy)) + 36.76;
+  return Math.max(3, Math.min(50, parseFloat(bf.toFixed(1))));
+}
+
+var kompoCh=null;
+
+function renderKompo(){
+  var ozEl=document.getElementById('kompo-ozet');
+  var ctx=document.getElementById('kompo-ch');
+  var statsEl=document.getElementById('kompo-stats');
+  if(!ozEl||!ctx) return;
+
+  var olcLog=lg('olc_log',[]);
+  var kiloLog=lg('kl',[{w:1,k:88}]);
+  var boy=179;
+
+  // Haftalık veri topla
+  var labels=[],yagData=[],kasData=[],yagKgData=[];
+  var enSonYag=null,enSonKas=null,enSonKilo=null;
+
+  for(var w=1;w<=12;w++){
+    var olc=null;
+    for(var i=0;i<olcLog.length;i++){if(olcLog[i].w===w){olc=olcLog[i];break;}}
+    var kilo=null;
+    for(var i=0;i<kiloLog.length;i++){if(kiloLog[i].w===w){kilo=kiloLog[i].k;break;}}
+
+    if(olc&&olc.bel&&olc.boyun&&kilo){
+      var yag=navyYagOrani(olc.bel,olc.boyun,boy);
+      if(yag!==null){
+        var yagKg=(kilo*yag/100);
+        var kasKg=kilo-yagKg;
+        labels.push(w+'.');
+        yagData.push(parseFloat(yag.toFixed(1)));
+        kasData.push(parseFloat(kasKg.toFixed(1)));
+        yagKgData.push(parseFloat(yagKg.toFixed(1)));
+        enSonYag=yag; enSonKas=kasKg; enSonKilo=kilo;
+      }
+    }
+  }
+
+  // Mevcut durum özeti
+  if(enSonYag!==null){
+    var yagRenk=enSonYag<15?'var(--green)':enSonYag<20?'var(--orange)':'var(--red)';
+    var yagYorum=enSonYag<12?'Çok düşük':enSonYag<17?'Atletik':enSonYag<22?'Fitness':enSonYag<28?'Ortalama':'Yüksek';
+    ozEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
+      +'<div style="text-align:center;background:#111;border-radius:10px;padding:10px">'
+      +'<div style="font-size:10px;color:var(--sub)">Yağ Oranı</div>'
+      +'<div style="font-size:22px;font-weight:700;color:'+yagRenk+'">%'+enSonYag.toFixed(1)+'</div>'
+      +'<div style="font-size:10px;color:'+yagRenk+'">'+yagYorum+'</div></div>'
+      +'<div style="text-align:center;background:#111;border-radius:10px;padding:10px">'
+      +'<div style="font-size:10px;color:var(--sub)">Yağ Kütlesi</div>'
+      +'<div style="font-size:22px;font-weight:700;color:var(--orange)">'+(enSonKilo*enSonYag/100).toFixed(1)+' kg</div>'
+      +'<div style="font-size:10px;color:var(--sub)">yağ</div></div>'
+      +'<div style="text-align:center;background:#111;border-radius:10px;padding:10px">'
+      +'<div style="font-size:10px;color:var(--sub)">Yağsız Kütle</div>'
+      +'<div style="font-size:22px;font-weight:700;color:var(--blue)">'+enSonKas.toFixed(1)+' kg</div>'
+      +'<div style="font-size:10px;color:var(--sub)">kas+kemik</div></div>'
+      +'</div>';
+  } else {
+    ozEl.innerHTML='<div style="color:var(--sub);font-size:13px">Bel + boyun ölçüsü ve kilo girilince hesaplanır.</div>';
+  }
+
+  if(labels.length<2){
+    if(kompoCh) kompoCh.destroy();
+    return;
+  }
+
+  if(kompoCh) kompoCh.destroy();
+  kompoCh=new Chart(ctx,{
+    type:'line',
+    data:{labels:labels,datasets:[
+      {label:'Yağ %',data:yagData,borderColor:'#fb923c',backgroundColor:'rgba(251,146,60,0.1)',borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#fb923c',tension:0.3,fill:true,spanGaps:false,yAxisID:'y'},
+      {label:'Yağsız kg',data:kasData,borderColor:'#60a5fa',backgroundColor:'transparent',borderWidth:2,borderDash:[4,3],pointRadius:4,pointBackgroundColor:'#60a5fa',tension:0.3,fill:false,spanGaps:false,yAxisID:'y2'}
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:true,labels:{color:'#888',font:{size:10},boxWidth:12}}},
+      scales:{
+        y:{position:'left',ticks:{color:'#fb923c',font:{size:9},callback:function(v){return '%'+v;}},grid:{color:'#222'}},
+        y2:{position:'right',ticks:{color:'#60a5fa',font:{size:9},callback:function(v){return v+' kg';}},grid:{display:false}},
+        x:{ticks:{color:'#888',font:{size:9},maxRotation:0},grid:{display:false}}
+      }
+    }
+  });
+
+  // Değişim analizi
+  if(yagData.length>=2){
+    var yagFark=(yagData[yagData.length-1]-yagData[0]).toFixed(1);
+    var kasFark=(kasData[kasData.length-1]-kasData[0]).toFixed(1);
+    var yagKgFark=(yagKgData[yagKgData.length-1]-yagKgData[0]).toFixed(1);
+    statsEl.innerHTML='<div class="mg" style="margin-bottom:8px">'
+      +'<div class="met"><div class="ml">Yağ oranı değişimi</div><div class="mv" style="color:'+(parseFloat(yagFark)<0?'var(--green)':'var(--red)')+';font-size:18px">'+(parseFloat(yagFark)>0?'+':'')+yagFark+'%</div></div>'
+      +'<div class="met"><div class="ml">Yağ kütlesi değişimi</div><div class="mv" style="color:'+(parseFloat(yagKgFark)<0?'var(--green)':'var(--red)')+';font-size:18px">'+(parseFloat(yagKgFark)>0?'+':'')+yagKgFark+' kg</div></div>'
+      +'<div class="met"><div class="ml">Yağsız kütle değişimi</div><div class="mv" style="color:'+(parseFloat(kasFark)>0?'var(--green)':'var(--orange)')+';font-size:18px">'+(parseFloat(kasFark)>0?'+':'')+kasFark+' kg</div></div>'
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--sub);padding:8px;background:var(--card2);border-radius:8px">'
+      +(parseFloat(kasFark)>0&&parseFloat(yagKgFark)<0?'✅ Kas artarken yağ eriyor — ideal rekomposisyon!':parseFloat(kasFark)>0?'💪 Kas kütlesi korunuyor/artıyor':'⚠ Yağsız kütle değişimine dikkat')
+      +'</div>';
+  }
+}
+
+// ---- SABAH ÖZETİ ----
+function renderSabahOzeti(){
+  var el=document.getElementById('sabah-ozeti-kart');
+  if(!el) return;
+
+  var isIdman=DT[cDay]==='idman';
+  var kiloLog=lg('kl',[{w:1,k:88}]);
+  var sonKilo=kiloLog.length?kiloLog[kiloLog.length-1].k:88;
+  var kalan=Math.max(0,sonKilo-75).toFixed(1);
+  var uykuKey='uyku_'+new Date().getFullYear()+'_'+(new Date().getMonth()+1)+'_'+new Date().getDate();
+  var uyku=lg(uykuKey,null);
+
+  // Bugünün takviyelerini al
+  var isIdmanGunu=DT[cDay]==='idman';
+  var supListesi=isIdmanGunu?['Ester-C sabah','Omega-3 + D3 öğleyle','Whey + Muz idman öncesi','BCAA idman sırası','Kreatin idman sonrası','ZMA gece']:['Ester-C sabah','Omega-3 + D3 öğleyle','Kreatin akşamla','ZMA gece'];
+
+  // Fabrika menüsü
+  var fabrika=getMenuForDay(cDay,cWk);
+  var oglenMenu=fabrika?(fabrika.a+' + '+fabrika.g):'Fabrika menüsü';
+
+  var h='';
+  h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">';
+  h+='<div style="font-size:24px">'+(isIdman?'💪':'😴')+'</div>';
+  h+='<div><div style="font-size:16px;font-weight:700">'+DF[cDay]+' — '+(isIdman?'İdman Günü':'Dinlenme Günü')+'</div>';
+  h+='<div style="font-size:12px;color:var(--sub)">'+cWk+'. Hafta · Hedefe '+kalan+' kg kaldı</div></div></div>';
+
+  // Uyku durumu
+  if(uyku&&uyku.saat){
+    var uyRenk=uyku.saat>=7?'var(--green)':uyku.saat>=6?'var(--orange)':'var(--red)';
+    h+='<div style="background:#111;border-radius:10px;padding:8px 12px;margin-bottom:8px;display:flex;justify-content:space-between">';
+    h+='<span style="font-size:12px;color:var(--sub)">😴 Uyku</span>';
+    h+='<span style="font-size:12px;font-weight:700;color:'+uyRenk+'">'+uyku.saat+' saat · Enerji '+uyku.enerji+'/5</span></div>';
+  }
+
+  // Öğlen menüsü
+  if(fabrika){
+    h+='<div style="background:#111;border-radius:10px;padding:8px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">';
+    h+='<span style="font-size:12px;color:var(--sub)">🍽 Öğlen</span>';
+    h+='<span style="font-size:12px;font-weight:600;color:var(--text)">'+oglenMenu+'</span></div>';
+  }
+
+  // İdman varsa hangi gün
+  if(isIdman){
+    var woMap={0:'paz',2:'sal',4:'per',6:'cmt'};
+    var woKey=woMap[cDay];
+    var woLbl=woKey?WOS[woKey].lbl:'';
+    h+='<div style="background:#14321f;border-radius:10px;padding:8px 12px;margin-bottom:8px;border:1px solid #4ade8033">';
+    h+='<div style="font-size:12px;color:var(--green);font-weight:700">🏋 '+woLbl+'</div>';
+    h+='<div style="font-size:11px;color:var(--sub);margin-top:2px">'+(woKey?WOS[woKey].nt:'')+'</div></div>';
+  }
+
+  // Takviyeler
+  h+='<div style="font-size:11px;color:var(--sub);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Bugünün Takviyeleri</div>';
+  h+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+  supListesi.forEach(function(s){
+    h+='<span style="font-size:11px;background:var(--card2);color:var(--sub);padding:3px 8px;border-radius:6px">'+s+'</span>';
+  });
+  h+='</div>';
+
+  // Kopyala butonu
+  h+='<button onclick="sabahOzetiKopyala()" style="width:100%;margin-top:12px;background:var(--card2);color:var(--sub);border:none;border-radius:10px;padding:8px;font-size:12px;cursor:pointer">📋 WhatsApp\'a Kopyala</button>';
+
+  el.innerHTML=h;
+}
+
+function sabahOzetiKopyala(){
+  var isIdman=DT[cDay]==='idman';
+  var kiloLog=lg('kl',[{w:1,k:88}]);
+  var sonKilo=kiloLog.length?kiloLog[kiloLog.length-1].k:88;
+  var kalan=Math.max(0,sonKilo-75).toFixed(1);
+  var fabrika=getMenuForDay(cDay,cWk);
+
+  var txt='🏋 *'+DF[cDay]+'* — '+(isIdman?'İdman Günü 💪':'Dinlenme Günü 😴')+'\n';
+  txt+='📅 '+cWk+'. Hafta | Hedefe *'+kalan+' kg* kaldı\n\n';
+  if(fabrika) txt+='🍽 Öğlen: '+fabrika.a+' + '+fabrika.g+'\n\n';
+  txt+='💊 Takviyeler:\n'+(isIdman?'• Ester-C sabah\n• Omega-3 + D3 öğleyle\n• Whey + Muz idman öncesi\n• BCAA idman sırası\n• Kreatin sonrası\n• ZMA gece':'• Ester-C sabah\n• Omega-3 + D3 öğleyle\n• Kreatin akşamla\n• ZMA gece');
+
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(txt).then(function(){alert('✓ Kopyalandı! WhatsApp\'a yapıştır.');});
+  }
 }
 
 function fotoKaydet(){
