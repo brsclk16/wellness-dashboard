@@ -308,7 +308,10 @@ canvas{width:100%!important}
 </div>
 
 <div id="pg2" class="pg">
-  <div class="ptitle">Lift Geçmişi</div>
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div class="ptitle">Lift Geçmişi</div>
+    <button onclick="gosterProgramSonu()" style="background:var(--card2);border:none;color:var(--sub);border-radius:10px;padding:6px 12px;font-size:12px;cursor:pointer">🏆 Program Sonu</button>
+  </div>
   <p class="psub">Ana hareketlerin haftalık ilerleme grafiği</p>
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="lift-btns"></div>
   <div class="card">
@@ -323,6 +326,22 @@ canvas{width:100%!important}
   </div>
   <div class="card" id="korel-stats">
     <div style="color:var(--sub);font-size:13px">Hem kilo hem antrenman verisi girdikçe analiz burada görünür.</div>
+  </div>
+</div>
+
+<!-- Program Sonu Analizi Modal -->
+<div id="program-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:300;overflow-y:auto;padding:20px">
+  <div style="background:#1a1a1a;border-radius:20px;padding:20px;max-width:420px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:32px;margin-bottom:8px">🏆</div>
+      <div style="font-size:22px;font-weight:700;color:var(--green)">12 Hafta Tamamlandı</div>
+      <div style="font-size:13px;color:var(--sub);margin-top:4px">Güray Hypertrophy Max — Program Sonu Raporu</div>
+    </div>
+    <div id="program-modal-icerik"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px">
+      <button onclick="document.getElementById('program-modal').style.display='none'" style="background:var(--card2);color:var(--text);border:none;border-radius:12px;padding:12px;font-size:14px;cursor:pointer">Kapat</button>
+      <button onclick="exportData()" style="background:var(--green);color:#000;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">📋 Raporu Kopyala</button>
+    </div>
   </div>
 </div>
 
@@ -644,6 +663,10 @@ function init(){
       setTimeout(function(){gosterHaftaOzeti(cWk);},1200);
     }
   }
+  // 12. haftada program sonu analizi
+  if(cWk>=12 && !lg('program_sonu_gosterildi',false)){
+    setTimeout(function(){gosterProgramSonu();},2000);
+  }
 }
 
 // ---- SU TAKİBİ ----
@@ -839,7 +862,177 @@ function kaydetUyku(alan,deger){
   renderUyku();
 }
 
-// ---- VÜCUT ÖLÇÜSÜ GRAFİĞİ ----
+// ---- PROGRAM SONU ANALİZİ ----
+function gosterProgramSonu(){
+  var modal=document.getElementById('program-modal');
+  var icerik=document.getElementById('program-modal-icerik');
+  if(!modal||!icerik) return;
+
+  var kiloLog=lg('kl',[{w:1,k:88}]);
+  var olcLog=lg('olc_log',[]);
+
+  // Kilo başlangıç / bitiş
+  var kiloBaslangic=88; // sabit başlangıç
+  var kiloBitis=null;
+  var kiloEnDusuk=88;
+  kiloLog.forEach(function(x){
+    if(x.k<kiloEnDusuk) kiloEnDusuk=x.k;
+    if(x.w<=12) kiloBitis=x.k;
+  });
+  var kiloFark=kiloBitis!==null?(kiloBaslangic-kiloBitis).toFixed(1):null;
+
+  // Vücut ölçüleri başlangıç / bitiş
+  var olcIlk=olcLog.length?olcLog[0]:null;
+  var olcSon=olcLog.length?olcLog[olcLog.length-1]:null;
+
+  // Antrenman toplam / uyum
+  var woGunler=['sal','per','cmt','paz'];
+  var toplamYapilan=0, toplamHedef=48; // 12 hafta × 4 gün
+  for(var w=1;w<=12;w++){
+    woGunler.forEach(function(k){
+      if(Object.keys(lg('wo_'+k+'_w'+w,{})).length>0) toplamYapilan++;
+    });
+  }
+  var woUyum=Math.round((toplamYapilan/toplamHedef)*100);
+
+  // Öğün uyumu ortalaması
+  var toplamOgun=0, yenilenOgun=0;
+  for(var ww=1;ww<=12;ww++){
+    for(var gun=0;gun<7;gun++){
+      var mlog=lg('meal_'+ww+'_'+gun,{});
+      toplamOgun+=ML[gun].filter(function(m){return m.n;}).length;
+      Object.keys(mlog).forEach(function(k){if(mlog[k]==='yedim') yenilenOgun++;});
+    }
+  }
+  var ogunUyum=toplamOgun>0?Math.round((yenilenOgun/toplamOgun)*100):0;
+
+  // Lift gelişimleri — tüm hareketler
+  var liftSonuclari=[];
+  LIFTS.forEach(function(lift){
+    var ilkBest=null,sonBest=null,enIyi=null;
+    for(var w=1;w<=12;w++){
+      var ss=lg('wo_'+lift.wo+'_w'+w,{});
+      var best=getBestSet(ss,lift.mi);
+      if(best){
+        if(!ilkBest) ilkBest={w:w,kg:best.kg};
+        sonBest={w:w,kg:best.kg};
+        if(!enIyi||best.kg>enIyi.kg) enIyi={w:w,kg:best.kg};
+      }
+    }
+    if(ilkBest&&sonBest&&ilkBest.w!==sonBest.w){
+      var artis=sonBest.kg-ilkBest.kg;
+      var pct=Math.round((artis/ilkBest.kg)*100);
+      liftSonuclari.push({n:lift.n,ilk:ilkBest.kg,son:sonBest.kg,artis:artis,pct:pct,enIyi:enIyi?enIyi.kg:sonBest.kg});
+    }
+  });
+  liftSonuclari.sort(function(a,b){return b.pct-a.pct;});
+
+  // En iyi / en kötü antrenman haftası
+  var haftaSkoru=[];
+  for(var w=1;w<=12;w++){
+    var skor=0;
+    woGunler.forEach(function(k){if(Object.keys(lg('wo_'+k+'_w'+w,{})).length>0) skor++;});
+    haftaSkoru.push({w:w,skor:skor});
+  }
+  var enIyiHafta=haftaSkoru.reduce(function(a,b){return b.skor>a.skor?b:a},{w:0,skor:0});
+  var enKotuHafta=haftaSkoru.reduce(function(a,b){return b.skor<a.skor?b:a},{w:0,skor:4});
+
+  // Uyku ortalaması
+  var uykuTopla=0,uykuGun=0,enerjiTopla=0;
+  for(var w=1;w<=12;w++){
+    var hfLog=lg('uyku_hf_'+w,[]);
+    hfLog.forEach(function(x){
+      if(x.saat){uykuTopla+=x.saat;uykuGun++;}
+      if(x.enerji) enerjiTopla+=x.enerji;
+    });
+  }
+  var uykuOrt=uykuGun>0?(uykuTopla/uykuGun).toFixed(1):null;
+  var enerjiOrt=uykuGun>0?(enerjiTopla/uykuGun).toFixed(1):null;
+
+  // HTML oluştur
+  var h='';
+
+  // Kilo kartı
+  h+='<div style="background:linear-gradient(135deg,#14321f,#1a2f1a);border-radius:14px;padding:16px;margin-bottom:10px;border:1px solid var(--green)">';
+  h+='<div style="font-size:11px;color:var(--green);font-weight:600;text-transform:uppercase;margin-bottom:10px">⚖ Kilo Dönüşümü</div>';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+  h+='<div style="text-align:center"><div style="font-size:11px;color:var(--sub)">Başlangıç</div><div style="font-size:26px;font-weight:700">'+kiloBaslangic+' kg</div></div>';
+  h+='<div style="font-size:28px;color:var(--green)">→</div>';
+  h+='<div style="text-align:center"><div style="font-size:11px;color:var(--sub)">Bitiş</div><div style="font-size:26px;font-weight:700;color:var(--green)">'+(kiloBitis||'?')+' kg</div></div></div>';
+  if(kiloFark!==null){
+    h+='<div style="text-align:center;background:rgba(74,222,128,0.1);border-radius:10px;padding:8px">';
+    h+='<span style="font-size:20px;font-weight:700;color:var(--green)">−'+kiloFark+' kg verildi</span>';
+    h+='<div style="font-size:11px;color:var(--sub);margin-top:2px">En düşük: '+kiloEnDusuk+' kg · Hedefe '+(kiloBitis?Math.max(0,kiloBitis-75).toFixed(1):'?')+' kg kaldı</div>';
+    h+='</div>';
+  }
+  h+='</div>';
+
+  // Vücut ölçüleri
+  if(olcIlk&&olcSon&&olcIlk.w!==olcSon.w){
+    h+='<div style="background:var(--card2);border-radius:14px;padding:14px;margin-bottom:10px">';
+    h+='<div style="font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;margin-bottom:10px">📐 Vücut Ölçüleri</div>';
+    var olcler=[{k:'bel',lbl:'Bel',iyi:'azal'},{k:'gogus',lbl:'Göğüs',iyi:'azal'},{k:'kol',lbl:'Kol',iyi:'art'},{k:'kalca',lbl:'Kalça',iyi:'azal'}];
+    olcler.forEach(function(o){
+      if(!olcIlk[o.k]||!olcSon[o.k]) return;
+      var fark=(parseFloat(olcSon[o.k])-parseFloat(olcIlk[o.k])).toFixed(1);
+      var iyi=(o.iyi==='azal'&&parseFloat(fark)<0)||(o.iyi==='art'&&parseFloat(fark)>0);
+      h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">';
+      h+='<span style="font-size:13px;color:var(--sub)">'+o.lbl+'</span>';
+      h+='<div style="text-align:right"><span style="font-size:13px;font-weight:600">'+olcIlk[o.k]+' → '+olcSon[o.k]+' cm</span>';
+      h+='<span style="font-size:12px;font-weight:700;color:'+(iyi?'var(--green)':'var(--red)')+';margin-left:8px">'+(parseFloat(fark)>0?'+':'')+fark+'</span></div></div>';
+    });
+    h+='</div>';
+  }
+
+  // Lift gelişimleri
+  if(liftSonuclari.length>0){
+    h+='<div style="background:var(--card2);border-radius:14px;padding:14px;margin-bottom:10px">';
+    h+='<div style="font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;margin-bottom:10px">💪 Lift Gelişimleri</div>';
+    liftSonuclari.forEach(function(l,i){
+      var madalya=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+      h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">';
+      h+='<div><span style="font-size:12px;font-weight:600">'+madalya+' '+l.n+'</span>';
+      h+='<div style="font-size:11px;color:var(--sub)">'+l.ilk+' → '+l.son+' kg</div></div>';
+      h+='<span style="font-size:15px;font-weight:700;color:'+(l.artis>0?'var(--green)':'var(--red)')+'">+'+(l.artis>0?l.artis:l.artis)+' kg <span style="font-size:11px">(%'+l.pct+')</span></span>';
+      h+='</div>';
+    });
+    h+='</div>';
+  }
+
+  // Uyum istatistikleri
+  h+='<div style="background:var(--card2);border-radius:14px;padding:14px;margin-bottom:10px">';
+  h+='<div style="font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;margin-bottom:10px">📊 Program Uyumu</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  h+='<div style="text-align:center;background:#111;border-radius:10px;padding:10px"><div style="font-size:11px;color:var(--sub)">Antrenman</div><div style="font-size:24px;font-weight:700;color:'+(woUyum>=80?'var(--green)':woUyum>=60?'var(--orange)':'var(--red)')+'">%'+woUyum+'</div><div style="font-size:11px;color:var(--sub)">'+toplamYapilan+'/'+toplamHedef+' seans</div></div>';
+  h+='<div style="text-align:center;background:#111;border-radius:10px;padding:10px"><div style="font-size:11px;color:var(--sub)">Beslenme</div><div style="font-size:24px;font-weight:700;color:'+(ogunUyum>=80?'var(--green)':ogunUyum>=60?'var(--orange)':'var(--red)')+'">%'+ogunUyum+'</div><div style="font-size:11px;color:var(--sub)">'+yenilenOgun+'/'+toplamOgun+' öğün</div></div>';
+  if(uykuOrt){
+    h+='<div style="text-align:center;background:#111;border-radius:10px;padding:10px"><div style="font-size:11px;color:var(--sub)">Ort. Uyku</div><div style="font-size:24px;font-weight:700;color:var(--blue)">'+uykuOrt+'s</div></div>';
+    h+='<div style="text-align:center;background:#111;border-radius:10px;padding:10px"><div style="font-size:11px;color:var(--sub)">Ort. Enerji</div><div style="font-size:24px;font-weight:700;color:var(--orange)">'+enerjiOrt+'/5</div></div>';
+  }
+  h+='</div>';
+  if(enIyiHafta.w>0){
+    h+='<div style="margin-top:10px;font-size:12px;color:var(--sub)">🔥 En iyi hafta: <span style="color:var(--green);font-weight:600">'+enIyiHafta.w+'. Hafta</span> ('+enIyiHafta.skor+'/4 seans)';
+    if(enKotuHafta.skor<4) h+=' · En zorlu: <span style="color:var(--orange);font-weight:600">'+enKotuHafta.w+'. Hafta</span> ('+enKotuHafta.skor+'/4)';
+    h+='</div>';
+  }
+  h+='</div>';
+
+  // Sonraki adım önerisi
+  h+='<div style="border-left:3px solid var(--purple);padding:12px 14px;font-size:13px;color:var(--sub);line-height:1.6">';
+  h+='<span style="color:var(--purple);font-weight:600">Sonraki Adım</span><br>';
+  if(kiloBitis&&kiloBitis>75){
+    h+='Hedefe '+(kiloBitis-75).toFixed(1)+' kg kaldı. Aynı program + kalori açığını koru. Güç korundu mu? Lift artışları söylüyor.';
+  } else if(kiloBitis&&kiloBitis<=75){
+    h+='Hedefe ulaştın 🎉 Artık hibrit programa geçme zamanı: güç + kardio + kalistenik kombine.';
+  } else {
+    h+='Veri eksik — kilo girişini tamamla, tam analiz için.';
+  }
+  h+='</div>';
+
+  icerik.innerHTML=h;
+  modal.style.display='block';
+  ls('program_sonu_gosterildi',true);
+}
 var OLC_METRIKLER=[
   {k:'bel',lbl:'Bel',renk:'#f87171'},
   {k:'gogus',lbl:'Göğüs',renk:'#60a5fa'},
