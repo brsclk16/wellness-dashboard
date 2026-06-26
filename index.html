@@ -1694,13 +1694,17 @@ function renderWD(){
     h+='<div class="csm"><div class="mv2"><div><div class="mvn">'+m.n+noteBtn+'</div><div class="mvm">'+(m.cardio?m.r:sc+' set x '+m.r)+'</div></div><span class="rpe '+(m.lv==='h'?'rh':'rm')+'">'+m.rpe+'</span></div>'+noteDiv;
     h+='<div class="sl">';
     if(m.cardio){
-      // Kardio hareketi — sadece tamamlandı butonu
       var kardioVal=ss[mi+'_0']||'';
       var kardioTamam=kardioVal==='tamam';
-      h+='<div class="sr">';
-      h+='<button onclick="kardioToggle('+mi+')" style="border:none;border-radius:10px;font-size:13px;font-weight:700;padding:10px 20px;cursor:pointer;width:100%;background:'+(kardioTamam?'#14321f;color:#4ade80;border:1px solid #4ade80':'var(--card2)+\';color:var(--sub)\'')+'">';
-      h+=kardioTamam?'✓ Tamamlandı — 25 dk 5.0 / 15 incline':'Tamamlandı olarak işaretle';
-      h+='</button></div>';
+      h+='<div style="margin-top:8px">';
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:'+(kardioTamam?'#14321f':'var(--card2)')+';border-radius:12px;border:1.5px solid '+(kardioTamam?'#4ade80':'var(--border)')+';cursor:pointer" onclick="kardioToggle('+mi+')">';
+      h+='<div style="width:28px;height:28px;border-radius:50%;background:'+(kardioTamam?'#4ade80':'#333')+';display:flex;align-items:center;justify-content:center;flex-shrink:0">';
+      h+=kardioTamam?'<svg width="14" height="14" viewBox="0 0 14 14"><polyline points="2,7 6,11 12,3" stroke="#000" stroke-width="2.5" fill="none"/></svg>':'';
+      h+='</div>';
+      h+='<div>';
+      h+='<div style="font-size:13px;font-weight:600;color:'+(kardioTamam?'#4ade80':'var(--text)')+'">'+( kardioTamam?'Tamamlandı ✓':'Tamamlandı olarak işaretle')+'</div>';
+      h+='<div style="font-size:11px;color:var(--sub);margin-top:1px">25 dk · 5.0 tempo · %15 incline</div>';
+      h+='</div></div></div>';
     } else {
     var prevSS=lg('wo_'+cWO+'_w'+(cWk-1),{});
     for(var si=0;si<sc;si++){
@@ -1733,7 +1737,7 @@ function renderWD(){
 function kardioToggle(mi){
   var k='wo_'+cWO+'_w'+cWk;
   var s=lg(k,{});
-  s[mi+'_0']=s[mi+'_0']==='tamam'?'':' tamam';
+  s[mi+'_0']=s[mi+'_0']==='tamam'?'':'tamam';
   ls(k,s);
   renderWD();
 }
