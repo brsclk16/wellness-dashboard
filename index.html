@@ -645,7 +645,85 @@ input{-webkit-appearance:none}
   <button class="nb" onclick="sp('alis',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>Alışveriş
   </button>
+  <button class="nb" id="seyahat-nb" onclick="sp('seyahat',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>Seyahat
+  </button>
 </nav>
+
+<!-- SEYAHAT MODU SAYFASI -->
+<div id="pseyahat" class="pg">
+  <!-- Başlık + toggle -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+    <div class="ptitle">✈️ Seyahat Modu</div>
+    <div id="seyahat-toggle-btn" onclick="seyahatToggle()" style="display:flex;align-items:center;gap:8px;background:var(--card2);border-radius:20px;padding:6px 14px;cursor:pointer;border:1px solid var(--border)">
+      <div id="seyahat-toggle-dot" style="width:10px;height:10px;border-radius:50%;background:var(--sub)"></div>
+      <span id="seyahat-toggle-lbl" style="font-size:12px;font-weight:600;color:var(--sub)">Pasif</span>
+    </div>
+  </div>
+  <p class="psub">Aktif edilince tüm sekmeler seyahat protokolüne geçer</p>
+
+  <!-- Seyahat aktif banner -->
+  <div id="seyahat-aktif-banner" style="display:none;background:linear-gradient(135deg,rgba(255,159,10,0.15),rgba(255,159,10,0.05));border:1px solid rgba(255,159,10,0.3);border-radius:14px;padding:14px;margin-bottom:12px">
+    <div style="font-size:14px;font-weight:700;color:var(--orange);margin-bottom:4px">✈️ Seyahat Modu Aktif</div>
+    <div style="font-size:12px;color:var(--sub)" id="seyahat-gun-sayac"></div>
+  </div>
+
+  <!-- Günlük durum -->
+  <div class="card" id="seyahat-gunluk">
+    <div class="slbl">Bugünün Protokolü</div>
+    <div id="seyahat-gunluk-icerik"></div>
+  </div>
+
+  <!-- Otel antrenmanı -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="slbl" style="margin-bottom:0">💪 Otel Antrenmanı</div>
+      <span style="font-size:11px;color:var(--sub)">Ekipmansız · 25-30 dk</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:12px" id="seyahat-wo-tabs">
+      <button class="wtb on" onclick="seyahatWoGoster(0,this)">A Günü</button>
+      <button class="wtb" onclick="seyahatWoGoster(1,this)">B Günü</button>
+      <button class="wtb" onclick="seyahatWoGoster(2,this)">Dinlenme</button>
+    </div>
+    <div id="seyahat-wo-icerik"></div>
+  </div>
+
+  <!-- Beslenme rehberi -->
+  <div class="card">
+    <div class="slbl">🍽 Beslenme Rehberi</div>
+    <div style="background:var(--card2);border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:3px solid var(--orange)">
+      <div style="font-size:12px;font-weight:600;color:var(--orange);margin-bottom:4px">5-6 saat araba = Kalori hedefi 1400-1500 kcal</div>
+      <div style="font-size:11px;color:var(--sub)">Hareketsiz gün — kalori açığı zaten yüksek, kas yıkımını önlemek için protein öncelikli</div>
+    </div>
+
+    <div class="slbl" style="margin-top:10px">☀️ Açık Büfe Kahvaltı</div>
+    <div id="kahvalti-listesi"></div>
+
+    <div class="slbl" style="margin-top:12px">🌙 Akşam Restoran</div>
+    <div id="aksam-listesi"></div>
+
+    <div class="slbl" style="margin-top:12px">⚠️ Kaçınılacaklar</div>
+    <div id="kacin-listesi"></div>
+  </div>
+
+  <!-- Takviye stratejisi -->
+  <div class="card">
+    <div class="slbl">💊 Seyahat Takviye Stratejisi</div>
+    <div id="seyahat-takviye"></div>
+  </div>
+
+  <!-- Kas koruma bilimi -->
+  <div class="card">
+    <div class="slbl">🧬 Kas Koruma Bilimi</div>
+    <div id="kas-koruma"></div>
+  </div>
+
+  <!-- Notlar -->
+  <div class="card">
+    <div class="slbl">📝 Seyahat Notları</div>
+    <textarea id="seyahat-not" placeholder="Seyahat notların..." style="width:100%;background:var(--card2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-size:13px;padding:10px;min-height:80px;resize:vertical;font-family:-apple-system,sans-serif" oninput="ls('seyahat_not',this.value)"></textarea>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
@@ -939,6 +1017,7 @@ function init(){
   renderOlcGrafikBtns();
   renderBiyoritm();
   loadAiOneri();
+  renderSeyahatBanner();
 
   // Saate göre otomatik sekme seç
   var saat=new Date().getHours();
@@ -1617,7 +1696,7 @@ function renderOlcGrafik(){
 function sp(id,el){
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on');});
-  var map={g:'pg',a:'pa',k:'pk',t:'pt',ci:'pci',g2:'pg2',alis:'palis'};
+  var map={g:'pg',a:'pa',k:'pk',t:'pt',ci:'pci',g2:'pg2',alis:'palis',seyahat:'pseyahat'};
   document.getElementById(map[id]).classList.add('on');
   el.classList.add('on');
   if(id==='k'){renderK();renderOlcGrafik();renderUyumGrafik();renderKompo();}
@@ -1625,6 +1704,7 @@ function sp(id,el){
   if(id==='g2') renderLiftChart(cLift);
   if(id==='t') renderSupChecks();
   if(id==='alis') renderAlis(0);
+  if(id==='seyahat') renderSeyahat();
 }
 
 function wkCh(d){
@@ -3276,6 +3356,208 @@ function renderVucutFotoGecmis(){
   });
   el.innerHTML=h;
 }
+
+// ---- SEYAHAT MODU ----
+var SEYAHAT_WO=[
+  {gun:'A Günü — Üst Vücut (İtiş)',sure:'25-30 dk',not:'Sabah kalkışında, kahvaltıdan önce. Açken hafif kardio etkisi de yaratır.',hareketler:[
+    {n:'Push-up',s:'4 set',r:'Max tekrar (3 sn yavaş iniş)',not:'Geniş tutuş — göğüs ağırlıklı'},
+    {n:'Pike Push-up',s:'3 set',r:'8-12 tekrar',not:'Kalçayı yukarı kaldır — omuz baskısı'},
+    {n:'Triceps Dips (sandalye)',s:'3 set',r:'Max tekrar',not:'Arka el sandalyede, bacaklar uzatılmış'},
+    {n:'Diamond Push-up',s:'3 set',r:'8-15 tekrar',not:'Ellerini yakın tut — triceps ağırlıklı'},
+    {n:'Lateral Raise (su şişesi)',s:'3 set',r:'15-20 tekrar',not:'Dolu su şişeleri yeterli'},
+    {n:'Plank',s:'3 set',r:'45-60 sn',not:'Core stabilite — araba sürüşü için kritik'}
+  ]},
+  {gun:'B Günü — Alt Vücut + Çekiş',sure:'25-30 dk',not:'A gününden en az 1 gün sonra.',hareketler:[
+    {n:'Yavaş Squat (3 sn iniş)',s:'4 set',r:'15-20 tekrar',not:'Sıkışan kalça için — araba sonrası'},
+    {n:'Bulgarian Split Squat',s:'3 set',r:'10-12/bacak',not:'Arka ayağı yatağa veya sandalyeye koy'},
+    {n:'Glute Bridge (tepede 2 sn)',s:'4 set',r:'15-20 tekrar',not:'Uyuşan gluteus için elzem'},
+    {n:'Single Leg RDL (valizle)',s:'3 set',r:'10-12/bacak',not:'Hafif bavul veya çantayla'},
+    {n:'Inverted Row (masa altı)',s:'3 set',r:'Max tekrar',not:'Gövde düz — sırt ve biceps'},
+    {n:'Towel Curl (havlu)',s:'3 set',r:'12-15 tekrar',not:'Havluyu ayakla bas, iki elle çek'}
+  ]},
+  {gun:'Dinlenme / Aktif Toparlanma',sure:'15-20 dk',not:'Antrenman yok ama hareketsiz kalma. Araba molalarında da uygula.',hareketler:[
+    {n:'Yürüyüş',s:'1 set',r:'15-20 dk',not:'Otel çevresinde — kan akışı'},
+    {n:'Hip Flexor Stretch',s:'2 set',r:'60 sn/taraf',not:'Araba sürüşünden sıkışan kalça'},
+    {n:'Thoracic Rotation',s:'2 set',r:'10/yön',not:'Direksiyon pozisyonundan üst sırt'},
+    {n:'Wall Chest Stretch',s:'2 set',r:'45 sn/taraf',not:'Kapanan göğüs açılır'},
+    {n:'Calf Raise',s:'3 set',r:'20 tekrar',not:'Uzun oturma sonrası bacak şişmesi'},
+    {n:'Boyun + Omuz Rotasyonu',s:'2 set',r:'10 tekrar',not:'Sürüş yorgunluğu'}
+  ]}
+];
+
+var ARABA_PROTOCOL=[
+  {sure:'Her 90 dk',eylem:'5 dk mola — walking lunge ×10/bacak + squat ×20'},
+  {sure:'Her 3 saat',eylem:'10 dk — kısa yürüyüş + hip flexor stretch'},
+  {sure:'Sürüş boyunca',eylem:'Trafikte beklerken 30 sn izometrik core sıkıştırma'},
+  {sure:'Varışta',eylem:'10 dk glute bridge + thoracic rotation — otel odasında'}
+];
+
+function seyahatToggle(){
+  var aktif=lg('seyahat_aktif',false);
+  if(!aktif){
+    ls('seyahat_baslangic',new Date().toISOString().slice(0,10));
+    ls('seyahat_aktif',true);
+  } else {
+    ls('seyahat_aktif',false);
+    localStorage.removeItem('seyahat_baslangic');
+  }
+  renderSeyahat();
+}
+
+function renderSeyahatBanner(){
+  var aktif=lg('seyahat_aktif',false);
+  var banner=document.getElementById('seyahat-aktif-banner');
+  var toggleDot=document.getElementById('seyahat-toggle-dot');
+  var toggleLbl=document.getElementById('seyahat-toggle-lbl');
+  var toggleBtn=document.getElementById('seyahat-toggle-btn');
+  var nb=document.getElementById('seyahat-nb');
+  if(aktif){
+    var bas=lg('seyahat_baslangic','');
+    var gunFark=bas?Math.floor((Date.now()-new Date(bas).getTime())/(1000*60*60*24))+1:1;
+    if(banner){banner.style.display='block';document.getElementById('seyahat-gun-sayac').textContent=gunFark+'. gün · Kas koruma protokolü aktif';}
+    if(toggleDot) toggleDot.style.background='var(--orange)';
+    if(toggleLbl){toggleLbl.textContent='Aktif';toggleLbl.style.color='var(--orange)';}
+    if(toggleBtn) toggleBtn.style.borderColor='var(--orange)';
+    if(nb) nb.style.color='var(--orange)';
+  } else {
+    if(banner) banner.style.display='none';
+    if(toggleDot) toggleDot.style.background='var(--sub)';
+    if(toggleLbl){toggleLbl.textContent='Pasif';toggleLbl.style.color='var(--sub)';}
+    if(toggleBtn) toggleBtn.style.borderColor='var(--border)';
+    if(nb) nb.style.color='';
+  }
+}
+
+function seyahatWoGoster(idx, el){
+  document.querySelectorAll('#seyahat-wo-tabs .wtb').forEach(function(b){b.classList.remove('on');});
+  if(el) el.classList.add('on');
+  var wo=SEYAHAT_WO[idx];
+  var h='<div style="background:rgba(255,159,10,0.1);border-radius:10px;padding:10px 12px;margin-bottom:10px;border-left:3px solid var(--orange)">';
+  h+='<div style="font-size:12px;font-weight:700;color:var(--orange)">⏱ '+wo.sure+'</div>';
+  h+='<div style="font-size:12px;color:var(--sub);margin-top:3px">'+wo.not+'</div></div>';
+  wo.hareketler.forEach(function(mv,i){
+    h+='<div style="padding:10px 0;border-bottom:1px solid var(--border)">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
+    h+='<div style="flex:1"><div style="font-size:14px;font-weight:600">'+(i+1)+'. '+mv.n+'</div>';
+    h+='<div style="font-size:12px;color:var(--sub);margin-top:2px">'+mv.not+'</div></div>';
+    h+='<div style="text-align:right;flex-shrink:0">';
+    h+='<div style="font-size:12px;font-weight:700;color:var(--blue)">'+mv.s+'</div>';
+    h+='<div style="font-size:11px;color:var(--sub)">'+mv.r+'</div></div></div></div>';
+  });
+  document.getElementById('seyahat-wo-icerik').innerHTML=h;
+}
+
+function renderSeyahat(){
+  renderSeyahatBanner();
+  var aktif=lg('seyahat_aktif',false);
+
+  // Günlük protokol
+  var gunlukEl=document.getElementById('seyahat-gunluk-icerik');
+  if(gunlukEl){
+    if(aktif){
+      var bas=lg('seyahat_baslangic','');
+      var gunFark=bas?Math.floor((Date.now()-new Date(bas).getTime())/(1000*60*60*24))+1:1;
+      var woIdx=((gunFark-1)%3);
+      var bugunWo=SEYAHAT_WO[woIdx];
+      var h='<div style="background:rgba(255,159,10,0.1);border-radius:10px;padding:12px;border:1px solid rgba(255,159,10,0.2);margin-bottom:12px">';
+      h+='<div style="font-size:13px;font-weight:700;color:var(--orange);margin-bottom:4px">'+gunFark+'. Gün → '+bugunWo.gun+'</div>';
+      h+='<div style="font-size:12px;color:var(--sub)">'+bugunWo.not+'</div>';
+      h+='<button onclick="seyahatWoGoster('+woIdx+', null);document.querySelector(\'#seyahat-wo-tabs .wtb:nth-child('+(woIdx+1)+')\').click()" style="margin-top:8px;background:var(--orange);color:#000;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">Antrenmana Bak →</button>';
+      h+='</div>';
+      h+='<div style="font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🚗 Araba Protokolü</div>';
+      ARABA_PROTOCOL.forEach(function(p){
+        h+='<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">';
+        h+='<span style="font-size:11px;color:var(--orange);font-weight:600;min-width:80px;flex-shrink:0">'+p.sure+'</span>';
+        h+='<span style="font-size:12px;color:var(--sub)">'+p.eylem+'</span></div>';
+      });
+      gunlukEl.innerHTML=h;
+    } else {
+      gunlukEl.innerHTML='<div style="text-align:center;padding:20px 0;color:var(--sub)"><div style="font-size:32px;margin-bottom:8px">✈️</div><div style="font-size:13px">Seyahate çıktığında sağ üstten aktif et</div></div>';
+    }
+  }
+
+  seyahatWoGoster(0, document.querySelector('#seyahat-wo-tabs .wtb'));
+
+  // Kahvaltı önerileri
+  var kEl=document.getElementById('kahvalti-listesi');
+  if(kEl){
+    var oncelikli=[
+      {n:'Yumurta (haşlanmış/omlet) ⭐',m:'4-5 adet',p:28,kcal:320,not:'Her açık büfede var — önce bunları al'},
+      {n:'Beyaz peynir / Feta ⭐',m:'60-80g',p:12,kcal:180,not:'Protein + yağ kombinasyonu'},
+      {n:'Domates + Salatalık',m:'Bol',p:2,kcal:40,not:'Volume — tok hissettirr'},
+      {n:'Zeytin',m:'10-15 adet',p:1,kcal:70,not:'Sağlıklı yağ'},
+      {n:'Süt / Yoğurt (sade)',m:'200ml',p:8,kcal:120,not:'Ek protein kaynağı'},
+      {n:'Ceviz / Badem',m:'1 avuç',p:5,kcal:170,not:'İyi yağ + enerji'}
+    ];
+    var h='';
+    oncelikli.forEach(function(item){
+      h+='<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">';
+      h+='<div><div style="font-size:13px;font-weight:500">'+item.n+'</div><div style="font-size:11px;color:var(--sub)">'+item.not+'</div></div>';
+      h+='<div style="text-align:right;margin-left:8px;flex-shrink:0"><div style="font-size:11px;color:var(--green)">P:'+item.p+'g</div><div style="font-size:11px;color:var(--sub)">'+item.kcal+' kcal</div></div></div>';
+    });
+    h+='<div style="margin-top:8px;padding:8px;background:rgba(255,69,58,0.08);border-radius:8px;font-size:11px;color:var(--red)">❌ Kaçın: Ekmek · Reçel/Bal · Meyve suyu · Börek · Tatlılar</div>';
+    kEl.innerHTML=h;
+  }
+
+  // Akşam önerileri
+  var aEl=document.getElementById('aksam-listesi');
+  if(aEl){
+    var aksam=[
+      {n:'Izgara et / Tavuk / Balık ⭐',m:'200-250g',p:48,kcal:320,not:'Ana protein — pilav olmadan sipariş et'},
+      {n:'Köfte (sade) ⭐',m:'200g',p:36,kcal:360,not:'İnegöl köftesi varsa bonus 😄'},
+      {n:'Mercimek çorbası',m:'1 kase',p:9,kcal:130,not:'Protein + lif'},
+      {n:'Izgara sebze / Salata',m:'Bol',p:3,kcal:60,not:'Hacim, vitamin'}
+    ];
+    var h='';
+    aksam.forEach(function(item){
+      h+='<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">';
+      h+='<div><div style="font-size:13px;font-weight:500">'+item.n+'</div><div style="font-size:11px;color:var(--sub)">'+item.not+'</div></div>';
+      h+='<div style="text-align:right;margin-left:8px;flex-shrink:0"><div style="font-size:11px;color:var(--green)">P:'+item.p+'g</div><div style="font-size:11px;color:var(--sub)">'+item.kcal+' kcal</div></div></div>';
+    });
+    h+='<div style="margin-top:8px;padding:8px;background:rgba(255,69,58,0.08);border-radius:8px;font-size:11px;color:var(--red)">❌ Kaçın: Pilav/Makarna · Kızartma · Alkol · Tatlı</div>';
+    aEl.innerHTML=h;
+  }
+
+  // Kaçınılacaklar (boş bırak çünkü listeye ekledik)
+  var kacEl=document.getElementById('kacin-listesi');
+  if(kacEl) kacEl.innerHTML='<div style="font-size:12px;color:var(--sub)">Kahvaltı ve akşam listelerinin altında gösterildi.</div>';
+
+  // Takviye
+  var tEl=document.getElementById('seyahat-takviye');
+  if(tEl){
+    tEl.innerHTML='<div style="display:flex;flex-direction:column;gap:8px">'+
+      '<div style="background:rgba(48,209,88,0.1);border-radius:10px;padding:10px 12px;border-left:3px solid var(--green)">'+
+      '<div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:3px">✅ Kesinlikle Götür</div>'+
+      '<div style="font-size:12px;color:var(--sub)">Kreatin 5g/gün (kas koru), Whey 1-2 ölçek (protein hedefi), Omega-3, Ester-C, D3, ZMA</div></div>'+
+      '<div style="background:rgba(255,159,10,0.1);border-radius:10px;padding:10px 12px;border-left:3px solid var(--orange)">'+
+      '<div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:3px">💡 Pratik İpucu</div>'+
+      '<div style="font-size:12px;color:var(--sub)">Whey\'i sabah kahvaltısında sütle karıştır. Günde 150g+ protein hedefini düşürme — kalori düşse de protein sabit kalmalı.</div></div>'+
+      '<div style="background:rgba(10,132,255,0.1);border-radius:10px;padding:10px 12px;border-left:3px solid var(--blue)">'+
+      '<div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:3px">🔬 Bilimsel Not</div>'+
+      '<div style="font-size:12px;color:var(--sub)">Kreatin hücre içi su tutarak kas hacmini korur. Seyahatte kreatini bırakmak kas küçülmesi hissi yaratır — aslında su kaybıdır, devam et.</div></div>'+
+      '</div>';
+  }
+
+  // Kas koruma
+  var kasEl=document.getElementById('kas-koruma');
+  if(kasEl){
+    kasEl.innerHTML='<div style="display:flex;flex-direction:column;gap:8px">'+
+      '<div style="background:var(--card2);border-radius:10px;padding:10px 12px;border-left:3px solid var(--green)">'+
+      '<div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:3px">2 Haftaya Kadar Güvenli</div>'+
+      '<div style="font-size:12px;color:var(--sub)">Kas kütlesi 2 haftaya kadar ciddi kayıp yaşamaz. Güç %10-15 düşer ama kas hacmi korunur.</div></div>'+
+      '<div style="background:var(--card2);border-radius:10px;padding:10px 12px;border-left:3px solid var(--blue)">'+
+      '<div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:3px">Frekans > Hacim</div>'+
+      '<div style="font-size:12px;color:var(--sub)">Haftada 2 full body yeterli. Kas protein sentezini canlı tutar. Az ama düzenli.</div></div>'+
+      '<div style="background:var(--card2);border-radius:10px;padding:10px 12px;border-left:3px solid var(--purple)">'+
+      '<div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:3px">Muscle Memory</div>'+
+      '<div style="font-size:12px;color:var(--sub)">Eve dönüşte 1-2 haftada güç geri gelir. Myonuclei korunur — sinir sistemi adaptasyonu kaybolmaz.</div></div>'+
+      '</div>';
+  }
+
+  var notEl=document.getElementById('seyahat-not');
+  if(notEl) notEl.value=lg('seyahat_not','');
+}
+
 function biyoritmHesapla(dogumTarihi, hedefTarih){
   var msGun=24*60*60*1000;
   var gunFark=Math.round((hedefTarih-dogumTarihi)/msGun);
