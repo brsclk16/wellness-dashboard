@@ -237,64 +237,87 @@ input{-webkit-appearance:none}
 <body>
 
 <div id="pg" class="pg on">
-  <div style="display:flex;justify-content:space-between;align-items:center">
-    <div class="ptitle">Gunluk Plan</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+    <div class="ptitle">Günlük Plan</div>
     <button onclick="gosterHaftaOzeti(cWk)" style="background:var(--card2);border:none;color:var(--sub);border-radius:10px;padding:6px 12px;font-size:12px;cursor:pointer">📊 Özet</button>
   </div>
   <p class="psub" id="tdlbl"></p>
+
   <div class="install-banner" id="installBanner" style="display:none">
-    <div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:6px">Ana Ekrana Ekle</div>
-    <div style="font-size:12px;color:var(--sub)">Paylas ikonu → "Ana Ekrana Ekle" secenegiyle uygulama gibi kullanabilirsin. Veriler kalici olarak saklanir.</div>
+    <div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:4px">Ana Ekrana Ekle</div>
+    <div style="font-size:12px;color:var(--sub)">Paylaş → "Ana Ekrana Ekle" → uygulama gibi kullan</div>
   </div>
-  <div class="wnav">
+
+  <!-- Günlük Özet Kart — her zaman görünür -->
+  <div class="card" style="margin-bottom:10px" id="gunluk-ozet-kart">
+    <div id="gunluk-ozet-icerik"></div>
+  </div>
+
+  <div class="wnav" style="margin-bottom:10px">
     <button class="wnb" onclick="wkCh(-1)">&#8249;</button>
     <span style="font-size:17px;font-weight:700" id="wl1">1. Hafta</span>
     <button class="wnb" onclick="wkCh(1)">&#8250;</button>
   </div>
   <div class="dscr" id="dscr"></div>
 
-  <div class="card" style="margin-bottom:12px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div class="slbl" style="margin-bottom:0">😴 Uyku & Enerji</div>
-      <span id="uyku-durum-lbl" style="font-size:11px;color:var(--sub)">Bugün girilmedi</span>
+  <!-- Uyku & Su — collapsible -->
+  <div style="margin-bottom:8px">
+    <div onclick="toggleSection('uyku-su-body')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--card);border-radius:12px;cursor:pointer;border:1px solid rgba(255,255,255,0.04)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="uyku-durum-lbl" style="font-size:13px;color:var(--sub)">😴 Uyku & 💧 Su</span>
+      </div>
+      <svg id="uyku-su-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--sub);transition:transform 0.2s"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+    <div id="uyku-su-body" style="display:none;background:var(--card);border-radius:0 0 12px 12px;padding:12px 14px;border:1px solid rgba(255,255,255,0.04);border-top:none;margin-top:-4px">
+      <!-- Uyku -->
+      <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Uyku & Enerji</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+          <div>
+            <div style="font-size:11px;color:var(--sub);margin-bottom:6px">Süre</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap" id="uyku-saatler"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--sub);margin-bottom:6px">Enerji</div>
+            <div style="display:flex;gap:4px" id="uyku-enerji"></div>
+          </div>
+        </div>
+        <div id="uyku-kayitli" style="display:none;background:var(--card2);border-radius:8px;padding:8px;font-size:12px"></div>
+      </div>
+      <!-- Su -->
       <div>
-        <div style="font-size:11px;color:var(--sub);margin-bottom:6px">Uyku Süresi</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap" id="uyku-saatler"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Su</div>
+          <span style="font-size:11px;color:var(--sub)">Hedef: 17 bardak</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+          <button onclick="suDegistir(-1)" style="width:36px;height:36px;border-radius:50%;background:var(--card2);border:none;color:var(--text);font-size:20px;cursor:pointer;flex-shrink:0">−</button>
+          <div style="flex:1;text-align:center">
+            <div id="su-sayi" style="font-size:32px;font-weight:700;color:var(--blue);line-height:1">0</div>
+            <div style="font-size:10px;color:var(--sub)">bardak × 200ml</div>
+          </div>
+          <button onclick="suDegistir(1)" style="width:36px;height:36px;border-radius:50%;background:var(--blue);border:none;color:#000;font-size:20px;cursor:pointer;flex-shrink:0;font-weight:700">+</button>
+        </div>
+        <div style="background:var(--card2);border-radius:20px;height:6px;overflow:hidden;margin-bottom:4px">
+          <div id="su-bar" style="height:6px;border-radius:20px;background:linear-gradient(90deg,var(--blue),var(--green));width:0%;transition:width 0.3s"></div>
+        </div>
+        <div id="su-durum" style="font-size:11px;color:var(--sub);text-align:center"></div>
       </div>
-      <div>
-        <div style="font-size:11px;color:var(--sub);margin-bottom:6px">Sabah Enerjisi</div>
-        <div style="display:flex;gap:6px" id="uyku-enerji"></div>
-      </div>
     </div>
-    <div id="uyku-kayitli" style="display:none;background:var(--card2);border-radius:10px;padding:10px;font-size:13px"></div>
-  </div>
-  <div class="card" style="margin-bottom:12px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div class="slbl" style="margin-bottom:0">💧 Su Takibi</div>
-      <span style="font-size:11px;color:var(--sub)">Hedef: 17 bardak (3.5L)</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-      <button onclick="suDegistir(-1)" style="width:40px;height:40px;border-radius:50%;background:var(--card2);border:none;color:var(--text);font-size:22px;cursor:pointer;flex-shrink:0">−</button>
-      <div style="flex:1;text-align:center">
-        <div id="su-sayi" style="font-size:40px;font-weight:700;color:var(--blue);line-height:1">0</div>
-        <div style="font-size:11px;color:var(--sub);margin-top:2px">bardak × 200ml</div>
-      </div>
-      <button onclick="suDegistir(1)" style="width:40px;height:40px;border-radius:50%;background:var(--blue);border:none;color:#000;font-size:22px;cursor:pointer;flex-shrink:0;font-weight:700">+</button>
-    </div>
-    <div style="background:var(--card2);border-radius:20px;height:8px;overflow:hidden;margin-bottom:6px">
-      <div id="su-bar" style="height:8px;border-radius:20px;background:linear-gradient(90deg,var(--blue),var(--green));width:0%;transition:width 0.3s"></div>
-    </div>
-    <div id="su-durum" style="font-size:12px;color:var(--sub);text-align:center"></div>
   </div>
 
+  <!-- Öğünler -->
   <div class="card" id="ddet"></div>
 
-  <!-- Biyoritm -->
-  <div class="card" id="biyoritm-kart">
-    <div class="slbl">🌊 Biyoritm</div>
-    <div id="biyoritm-icerik"></div>
+  <!-- Biyoritm — collapsible -->
+  <div style="margin-bottom:8px">
+    <div onclick="toggleSection('biyoritm-body')" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--card);border-radius:12px;cursor:pointer;border:1px solid rgba(255,255,255,0.04)">
+      <span style="font-size:13px;color:var(--sub)">🌊 Biyoritm</span>
+      <svg id="biyoritm-body-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--sub);transition:transform 0.2s"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div id="biyoritm-body" style="display:none;background:var(--card);border-radius:0 0 12px 12px;padding:12px 14px;border:1px solid rgba(255,255,255,0.04);border-top:none;margin-top:-4px">
+      <div id="biyoritm-icerik"></div>
+    </div>
   </div>
 </div>
 
@@ -625,7 +648,7 @@ input{-webkit-appearance:none}
 
 <nav class="nav">
   <button class="nb on" onclick="sp('g',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Gunluk
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Günlük
   </button>
   <button class="nb" onclick="sp('a',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4v16M18 4v16M3 8h4M17 8h4M3 16h4M17 16h4"/></svg>Antrenman
@@ -636,19 +659,36 @@ input{-webkit-appearance:none}
   <button class="nb" onclick="sp('t',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>Takviye
   </button>
-  <button class="nb" onclick="sp('ci',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6c-1.5 1.5-3 3.5-3 6 0 1.66 1.34 3 3 3s3-1.34 3-3c0-2.5-1.5-4.5-3-6z"/></svg>Cilt
-  </button>
-  <button class="nb" onclick="sp('g2',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 8 12 13 15 21 7"/><line x1="21" y1="7" x2="21" y2="13"/><line x1="21" y1="7" x2="15" y2="7"/></svg>Lifts
-  </button>
-  <button class="nb" onclick="sp('alis',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>Alışveriş
-  </button>
-  <button class="nb" id="seyahat-nb" onclick="sp('seyahat',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>Seyahat
+  <button class="nb" onclick="toggleMoreMenu(this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>Daha Fazla
   </button>
 </nav>
+
+<!-- Daha Fazla Drawer -->
+<div id="more-drawer" style="display:none;position:fixed;bottom:calc(72px + env(safe-area-inset-bottom,34px));left:0;right:0;background:rgba(15,15,15,0.98);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,0.08);z-index:99;padding:8px 16px 12px">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+    <button onclick="spMore('ci')" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--card2);border:none;border-radius:14px;padding:14px 8px;cursor:pointer;color:var(--sub)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6c-1.5 1.5-3 3.5-3 6 0 1.66 1.34 3 3 3s3-1.34 3-3c0-2.5-1.5-4.5-3-6z"/></svg>
+      <span style="font-size:12px;font-weight:500">Cilt</span>
+    </button>
+    <button onclick="spMore('g2')" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--card2);border:none;border-radius:14px;padding:14px 8px;cursor:pointer;color:var(--sub)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 8 12 13 15 21 7"/><line x1="21" y1="7" x2="21" y2="13"/><line x1="21" y1="7" x2="15" y2="7"/></svg>
+      <span style="font-size:12px;font-weight:500">Lifts</span>
+    </button>
+    <button onclick="spMore('alis')" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--card2);border:none;border-radius:14px;padding:14px 8px;cursor:pointer;color:var(--sub)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <span style="font-size:12px;font-weight:500">Alışveriş</span>
+    </button>
+    <button id="seyahat-nb" onclick="spMore('seyahat')" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--card2);border:none;border-radius:14px;padding:14px 8px;cursor:pointer;color:var(--sub)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span style="font-size:12px;font-weight:500">Seyahat</span>
+    </button>
+    <button onclick="spMore('ozet')" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--card2);border:none;border-radius:14px;padding:14px 8px;cursor:pointer;color:var(--sub)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      <span style="font-size:12px;font-weight:500">Özet</span>
+    </button>
+  </div>
+</div>
 
 <!-- SEYAHAT MODU SAYFASI -->
 <div id="pseyahat" class="pg">
@@ -1014,6 +1054,7 @@ function init(){
   checkBackupStatus();
   renderSu();
   renderUyku();
+  renderGunlukOzet();
   renderOlcGrafikBtns();
   renderBiyoritm();
   loadAiOneri();
@@ -1693,6 +1734,81 @@ function renderOlcGrafik(){
   }
 }
 
+function toggleSection(id){
+  var el=document.getElementById(id);
+  var chevron=document.getElementById(id+'-chevron');
+  if(!el) return;
+  var open=el.style.display==='block';
+  el.style.display=open?'none':'block';
+  if(chevron) chevron.style.transform=open?'':'rotate(180deg)';
+}
+
+function toggleMoreMenu(btn){
+  var drawer=document.getElementById('more-drawer');
+  if(!drawer) return;
+  var open=drawer.style.display==='block';
+  drawer.style.display=open?'none':'block';
+  btn.classList.toggle('on',!open);
+  if(!open){
+    setTimeout(function(){
+      document.addEventListener('click',function closeDrawer(e){
+        if(!drawer.contains(e.target)&&e.target!==btn){
+          drawer.style.display='none';
+          btn.classList.remove('on');
+          document.removeEventListener('click',closeDrawer);
+        }
+      });
+    },50);
+  }
+}
+
+function spMore(id){
+  document.getElementById('more-drawer').style.display='none';
+  document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on');});
+  sp(id,document.querySelector('.nb:last-child'));
+}
+
+function renderGunlukOzet(){
+  var el=document.getElementById('gunluk-ozet-icerik');
+  if(!el) return;
+  var isIdman=DT[cDay]==='idman';
+  var kiloLog=lg('kl',[{w:1,k:88}]);
+  var sonKilo=kiloLog.length?kiloLog[kiloLog.length-1].k:88;
+  var kalan=(sonKilo-75).toFixed(1);
+  var uyku=lg(getUykuKey(),null);
+  var suMiktar=lg(getSuKey(),0);
+  var mealLog=lg('meal_'+cWk+'_'+cDay,{});
+  var toplamOgun=ML[cDay].filter(function(m){return m.n;}).length;
+  var yenilenOgun=Object.keys(mealLog).filter(function(k){return mealLog[k]==='yedim';}).length;
+  var ogunPct=toplamOgun>0?Math.round((yenilenOgun/toplamOgun)*100):0;
+  var woPct=0;
+  try{
+    var wo=WOS[cWO];
+    if(wo){var ss=lg('wo_'+cWO+'_w'+cWk,{});var total=0,filled=0;
+      wo.mv.forEach(function(m,mi){if(!m.cardio)for(var si=0;si<m.s;si++){total++;if(ss[mi+'_'+si])filled++;}});
+      woPct=total>0?Math.round((filled/total)*100):0;}
+  }catch(e){}
+
+  var h='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">';
+  h+='<div style="font-size:22px">'+(isIdman?'💪':'😌')+'</div>';
+  h+='<div><div style="font-size:16px;font-weight:700">'+DF[cDay]+'</div>';
+  h+='<div style="font-size:12px;color:var(--sub)">'+cWk+'. Hafta · Hedefe <span style="color:'+(parseFloat(kalan)<=3?'var(--green)':'var(--orange)')+'">'+kalan+' kg</span> kaldı</div></div></div>';
+
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">';
+  var uyRenk=uyku&&uyku.saat?(uyku.saat>=7?'var(--green)':uyku.saat>=6?'var(--orange)':'var(--red)'):'var(--sub)';
+  h+='<div style="background:var(--card2);border-radius:10px;padding:8px;text-align:center"><div style="font-size:10px;color:var(--sub);margin-bottom:3px">😴 Uyku</div><div style="font-size:18px;font-weight:700;color:'+uyRenk+'">'+(uyku&&uyku.saat?uyku.saat+'s':'—')+'</div></div>';
+  var suRenk=suMiktar>=17?'var(--green)':suMiktar>=10?'var(--orange)':'var(--blue)';
+  h+='<div style="background:var(--card2);border-radius:10px;padding:8px;text-align:center"><div style="font-size:10px;color:var(--sub);margin-bottom:3px">💧 Su</div><div style="font-size:18px;font-weight:700;color:'+suRenk+'">'+suMiktar+'/17</div></div>';
+  var ogunRenk=ogunPct>=80?'var(--green)':ogunPct>=50?'var(--orange)':'var(--red)';
+  h+='<div style="background:var(--card2);border-radius:10px;padding:8px;text-align:center"><div style="font-size:10px;color:var(--sub);margin-bottom:3px">🍽 Öğün</div><div style="font-size:18px;font-weight:700;color:'+ogunRenk+'">%'+ogunPct+'</div></div>';
+  h+='</div>';
+  if(isIdman&&woPct>0){
+    h+='<div style="margin-top:8px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-bottom:4px"><span>💪 Antrenman</span><span>%'+woPct+'</span></div>';
+    h+='<div style="background:var(--card2);border-radius:20px;height:4px;overflow:hidden"><div style="height:4px;border-radius:20px;background:'+(woPct===100?'var(--green)':'var(--blue)')+';width:'+woPct+'%"></div></div></div>';
+  }
+  el.innerHTML=h;
+}
+
 function sp(id,el){
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on');});
@@ -1731,7 +1847,7 @@ function renderDS(){
     var b=document.createElement('button');
     b.className='dp'+(DT[i]==='idman'?' idman':'')+(i===cDay?' on':'');
     b.textContent=d+' '+(DT[i]==='idman'?'💪':'😴');
-    b.onclick=function(){cDay=i;renderDS();renderDD();renderSu();renderUyku();renderBiyoritm();};
+    b.onclick=function(){cDay=i;renderDS();renderDD();renderSu();renderUyku();renderBiyoritm();renderGunlukOzet();};
     c.appendChild(b);
   });
 }
