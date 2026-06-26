@@ -2849,12 +2849,17 @@ function exportData(){
     catch(e){allData[k]=localStorage.getItem(k);}
   }
   var json=JSON.stringify(allData,null,2);
-  if(navigator.clipboard){
-    navigator.clipboard.writeText(json).then(function(){
-      alert('✓ Veriler panoya kopyalandı!');
-    }).catch(function(){fallbackCopy(json);});
-  } else {
-    fallbackCopy(json);
+  // iOS için textarea fallback
+  var ta=document.getElementById('import-area');
+  if(ta){
+    ta.value=json;
+    ta.select();
+    try{
+      document.execCommand('copy');
+      alert('✓ Veriler kopyalandı! "Yedek JSON\'u buraya yapıştır" kutusunda da görünüyor — oradan da alabilirsin.');
+    } catch(e){
+      alert('Kutuya kopyalandı — uzun bas ve kopyala.');
+    }
   }
 }
 
@@ -2870,7 +2875,10 @@ function fallbackCopy(text){
 function importData(){
   var txt=document.getElementById('import-area').value.trim();
   var msgEl=document.getElementById('import-msg');
-  if(!txt){msgEl.style.display='block';msgEl.style.color='var(--red)';msgEl.textContent='Önce JSON yapıştır.';return;}
+  if(!txt){
+    msgEl.style.display='block';msgEl.style.color='var(--red)';
+    msgEl.textContent='Önce JSON yapıştır.';return;
+  }
   try{
     var parsed=JSON.parse(txt);
     var count=0;
@@ -2882,7 +2890,8 @@ function importData(){
     msgEl.textContent='✓ '+count+' kayıt geri yüklendi. Sayfa yenileniyor...';
     setTimeout(function(){location.reload();},1500);
   } catch(e){
-    msgEl.style.display='block';msgEl.style.color='var(--red)';msgEl.textContent='Geçersiz JSON.';
+    msgEl.style.display='block';msgEl.style.color='var(--red)';
+    msgEl.textContent='Geçersiz JSON — kontrol et.';
   }
 }
 
@@ -2895,17 +2904,39 @@ function manualBackup(){
   }
   var json=JSON.stringify(allData,null,2);
   var date=new Date().toISOString().slice(0,10);
-  var blob=new Blob([json],{type:'application/json'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;
-  a.download='wellness_yedek_'+date+'.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  ls('last_backup',Date.now());
-  checkBackupStatus();
+
+  // iOS PWA'da Blob download çalışmaz — textarea'ya yaz, kullanıcı kopyalasın
+  var isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if(isIOS){
+    var ta=document.getElementById('import-area');
+    if(ta){
+      ta.value=json;
+      alert('✓ Veriler aşağıdaki kutuya yazıldı.\nNot uygulamasına kopyalamak için:\n1. Kutucuğa uzun bas\n2. "Tümünü Seç" → "Kopyala"\n3. Notlar\'a yapıştır.');
+      ls('last_backup',Date.now());
+      checkBackupStatus();
+    }
+    return;
+  }
+
+  // Desktop için dosya indir
+  try{
+    var blob=new Blob([json],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;
+    a.download='wellness_yedek_'+date+'.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    ls('last_backup',Date.now());
+    checkBackupStatus();
+  } catch(e){
+    // Fallback
+    var ta2=document.getElementById('import-area');
+    if(ta2) ta2.value=json;
+    alert('Veriler kutuya yazıldı, kopyala.');
+  }
 }
 
 function checkBackupStatus(){
