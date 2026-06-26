@@ -290,6 +290,12 @@ input{-webkit-appearance:none}
   </div>
 
   <div class="card" id="ddet"></div>
+
+  <!-- Biyoritm -->
+  <div class="card" id="biyoritm-kart">
+    <div class="slbl">🌊 Biyoritm</div>
+    <div id="biyoritm-icerik"></div>
+  </div>
 </div>
 
 <!-- Haftalık Özet Modal -->
@@ -330,6 +336,16 @@ input{-webkit-appearance:none}
     </div>
     <div id="wo-plan-list"></div>
   </div>
+
+  <!-- AI Yük Önerisi -->
+  <div id="ai-oneri-kart" class="card" style="margin-bottom:12px;border:1px solid rgba(10,132,255,0.2)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="slbl" style="margin-bottom:0">🤖 AI Antrenman Analizi</div>
+      <button onclick="aiOneriGetir()" id="ai-oneri-btn" style="background:var(--blue);color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer">Analiz Et</button>
+    </div>
+    <div id="ai-oneri-icerik" style="font-size:13px;color:var(--sub)">Son 2 haftanın verilerini analiz edip kişisel öneriler üretir.</div>
+  </div>
+
   <div id="wdet"></div>
 </div>
 
@@ -892,6 +908,8 @@ function init(){
   renderSu();
   renderUyku();
   renderOlcGrafikBtns();
+  renderBiyoritm();
+  loadAiOneri();
 
   // Saate göre otomatik sekme seç
   var saat=new Date().getHours();
@@ -1604,7 +1622,7 @@ function renderDS(){
     var b=document.createElement('button');
     b.className='dp'+(DT[i]==='idman'?' idman':'')+(i===cDay?' on':'');
     b.textContent=d+' '+(DT[i]==='idman'?'💪':'😴');
-    b.onclick=function(){cDay=i;renderDS();renderDD();renderSu();renderUyku();};
+    b.onclick=function(){cDay=i;renderDS();renderDD();renderSu();renderUyku();renderBiyoritm();};
     c.appendChild(b);
   });
 }
@@ -2943,6 +2961,194 @@ function checkBackupStatus(){
   var label=d.toLocaleDateString('tr-TR')+' ('+gunFark+' gün önce)';
   el.textContent='Son yedek: '+label;
   el.style.color=gunFark>7?'var(--orange)':'var(--green)';
+}
+
+// ---- AI YÜK ÖNERİSİ ----
+function aiOneriGetir(){
+  var btn=document.getElementById('ai-oneri-btn');
+  var icerik=document.getElementById('ai-oneri-icerik');
+  btn.textContent='Analiz ediliyor...';
+  btn.disabled=true;
+  icerik.innerHTML='<div style="color:var(--sub);font-size:13px">🔍 Son 2 haftanın verileri okunuyor...</div>';
+
+  // Son 2 haftanın tüm set verilerini topla
+  var veriler={};
+  var gunler=['sal','per','cmt','paz'];
+  for(var w=Math.max(1,cWk-1);w<=cWk;w++){
+    veriler['hafta_'+w]={};
+    gunler.forEach(function(gun){
+      var ss=lg('wo_'+gun+'_w'+w,{});
+      if(Object.keys(ss).length>0){
+        veriler['hafta_'+w][gun]=ss;
+      }
+    });
+  }
+
+  // WOS verisi ile hareket isimlerini eşleştir
+  var hareketler={};
+  gunler.forEach(function(gun){
+    if(WOS[gun]){
+      WOS[gun].mv.forEach(function(m,mi){
+        if(!m.cardio){
+          hareketler[gun+'_'+mi]=m.n;
+        }
+      });
+    }
+  });
+
+  var prompt='Sen bir elit güç antrenmanı koçusun. Aşağıdaki antrenman verilerini analiz et ve Türkçe, kısa, somut öneriler ver.\n\n'+
+    'Sporcu: Barış, 26 yaşında, Güray Hypertrophy Max programı, '+cWk+'. hafta.\n'+
+    'Hedef: Güç artışı + yağ yakımı\n\n'+
+    'Son 2 haftanın set verileri (format: hareketIndex_setIndex = kgxrep):\n'+
+    JSON.stringify(veriler,null,2)+'\n\n'+
+    'Hareket isimleri:\n'+JSON.stringify(hareketler,null,2)+'\n\n'+
+    'Şunları analiz et:\n'+
+    '1. Hangi hareketlerde ağırlık artışı önerirsin? (somut kg ile)\n'+
+    '2. Hangi hareketlerde yorgunluk/performans düşüşü görüyorsun?\n'+
+    '3. Bu hafta için 3 kritik öneri\n\n'+
+    'Yanıtını madde madde, emoji ile, max 150 kelime. Direkt önerilere geç, giriş yapma.';
+
+  fetch('https://morello-ai-proxy.brsclk16.workers.dev',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-6',
+      max_tokens:600,
+      messages:[{role:'user',content:prompt}]
+    })
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    btn.textContent='Tekrar Analiz Et';
+    btn.disabled=false;
+    var text=data.content&&data.content[0]?data.content[0].text:'Analiz alınamadı.';
+    // Markdown'ı basit HTML'e çevir
+    text=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+    text=text.replace(/\n/g,'<br>');
+    icerik.innerHTML='<div style="font-size:13px;line-height:1.7;color:var(--text2)">'+text+'</div>'+
+      '<div style="font-size:11px;color:var(--sub);margin-top:8px">'+new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})+' itibarıyla analiz</div>';
+    ls('ai_oneri_'+cWk,{text:text,zaman:Date.now()});
+  })
+  .catch(function(){
+    btn.textContent='Analiz Et';
+    btn.disabled=false;
+    icerik.innerHTML='<div style="color:var(--red);font-size:13px">Bağlantı hatası. İnternet bağlantını kontrol et.</div>';
+  });
+}
+
+function loadAiOneri(){
+  var kayit=lg('ai_oneri_'+cWk,null);
+  var icerik=document.getElementById('ai-oneri-icerik');
+  if(!icerik) return;
+  if(kayit&&kayit.text){
+    var text=kayit.text;
+    text=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+    text=text.replace(/\n/g,'<br>');
+    var gecen=Math.round((Date.now()-kayit.zaman)/60000);
+    icerik.innerHTML='<div style="font-size:13px;line-height:1.7;color:var(--text2)">'+text+'</div>'+
+      '<div style="font-size:11px;color:var(--sub);margin-top:8px">'+gecen+' dakika önce analiz edildi</div>';
+  }
+}
+
+// ---- BİYORİTM ----
+function biyoritmHesapla(dogumTarihi, hedefTarih){
+  var msGun=24*60*60*1000;
+  var gunFark=Math.round((hedefTarih-dogumTarihi)/msGun);
+  // Fiziksel: 23 gün, Duygusal: 28 gün, Entelektüel: 33 gün
+  var fizik=Math.sin(2*Math.PI*gunFark/23);
+  var duygu=Math.sin(2*Math.PI*gunFark/28);
+  var entel=Math.sin(2*Math.PI*gunFark/33);
+  return{f:parseFloat(fizik.toFixed(2)),d:parseFloat(duygu.toFixed(2)),e:parseFloat(entel.toFixed(2))};
+}
+
+function biyoritmRenk(val){
+  if(val>0.5) return 'var(--green)';
+  if(val>0) return 'var(--orange)';
+  if(val>-0.5) return 'var(--orange)';
+  return 'var(--red)';
+}
+
+function biyoritmEtiket(val){
+  if(val>0.7) return 'Zirve';
+  if(val>0.3) return 'Yüksek';
+  if(val>-0.3) return 'Geçiş';
+  if(val>-0.7) return 'Düşük';
+  return 'Dip';
+}
+
+function renderBiyoritm(){
+  var el=document.getElementById('biyoritm-icerik');
+  if(!el) return;
+
+  // Barış'ın doğum tarihi: 12.11.1999
+  var dogum=new Date(1999,10,12,19,0,0); // Ay 0-indexed
+  var bugun=new Date();
+  // Seçili güne göre tarih hesapla
+  var hedef=new Date(bugun);
+  var gunFarki=cDay-bugun.getDay();
+  hedef.setDate(hedef.getDate()+gunFarki);
+
+  var br=biyoritmHesapla(dogum,hedef);
+
+  // Haftalık tablo (7 gün)
+  var gunIsim=['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
+  var h='';
+
+  // Bugünün detayı
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">';
+  [{lbl:'Fiziksel',val:br.f,ikon:'💪'},{lbl:'Duygusal',val:br.d,ikon:'❤️'},{lbl:'Entelektüel',val:br.e,ikon:'🧠'}].forEach(function(item){
+    var pct=Math.round((item.val+1)/2*100);
+    var renk=biyoritmRenk(item.val);
+    h+='<div style="background:var(--card2);border-radius:10px;padding:10px 8px;text-align:center">';
+    h+='<div style="font-size:16px;margin-bottom:4px">'+item.ikon+'</div>';
+    h+='<div style="font-size:10px;color:var(--sub);margin-bottom:4px">'+item.lbl+'</div>';
+    h+='<div style="font-size:15px;font-weight:700;color:'+renk+'">'+biyoritmEtiket(item.val)+'</div>';
+    h+='<div style="background:#333;border-radius:20px;height:3px;overflow:hidden;margin-top:5px">';
+    h+='<div style="height:3px;border-radius:20px;background:'+renk+';width:'+pct+'%"></div></div>';
+    h+='</div>';
+  });
+  h+='</div>';
+
+  // Antrenman önerisi
+  var toplamSkor=(br.f+br.d+br.e)/3;
+  var antrenmanOneri='';
+  var antrenmanRenk='';
+  if(br.f>0.5){
+    antrenmanOneri='💪 Bugün fiziksel zirveye yakınsın — ağır set, PR denemesi için ideal gün.';
+    antrenmanRenk='var(--green)';
+  } else if(br.f>0){
+    antrenmanOneri='✅ Fiziksel durum iyi — normal program, tempoyu koru.';
+    antrenmanRenk='var(--blue)';
+  } else if(br.f>-0.5){
+    antrenmanOneri='⚠️ Fiziksel geçiş döneminde — ağırlıkları %10 düşür, form ve tekniğe odaklan.';
+    antrenmanRenk='var(--orange)';
+  } else {
+    antrenmanOneri='🔴 Fiziksel dip noktası — aktif dinlenme veya hafif kardio önerilir, PR deneme.';
+    antrenmanRenk='var(--red)';
+  }
+  h+='<div style="background:var(--card2);border-radius:10px;padding:10px 12px;margin-bottom:10px;border-left:3px solid '+antrenmanRenk+'">';
+  h+='<div style="font-size:12px;color:'+antrenmanRenk+';line-height:1.5">'+antrenmanOneri+'</div></div>';
+
+  // Haftalık mini grafik
+  h+='<div style="font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Bu Hafta</div>';
+  h+='<div style="display:flex;gap:4px">';
+  for(var g=0;g<7;g++){
+    var gHedef=new Date(bugun);
+    gHedef.setDate(bugun.getDate()+(g-bugun.getDay()));
+    var gBr=biyoritmHesapla(dogum,gHedef);
+    var gFizik=Math.round((gBr.f+1)/2*100);
+    var gRenk=biyoritmRenk(gBr.f);
+    var isToday=g===bugun.getDay();
+    h+='<div style="flex:1;text-align:center">';
+    h+='<div style="font-size:9px;color:'+(isToday?'var(--blue)':'var(--sub)')+';margin-bottom:3px;font-weight:'+(isToday?'700':'400')+'">'+gunIsim[g]+'</div>';
+    h+='<div style="height:40px;background:var(--card2);border-radius:4px;overflow:hidden;position:relative">';
+    h+='<div style="position:absolute;bottom:0;left:0;right:0;background:'+gRenk+';opacity:0.7;height:'+gFizik+'%;border-radius:4px 4px 0 0"></div>';
+    h+='</div></div>';
+  }
+  h+='</div>';
+  h+='<div style="font-size:10px;color:var(--sub);margin-top:6px">Fiziksel biyoritm · Barış Çelik · 12.11.1999</div>';
+
+  el.innerHTML=h;
 }
 
 function saveCiltNot(){ls('cilt_not',document.getElementById('cilt-not').value);}
