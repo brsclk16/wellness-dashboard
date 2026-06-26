@@ -669,6 +669,8 @@ function renderDD(){
   });
   document.getElementById('ddet').innerHTML=h;
 }
+
+function setMeal(mi,st){
   var mealKey='meal_'+cWk+'_'+cDay;
   var mealLog=lg(mealKey,{});
   if(mealLog[mi]===st) delete mealLog[mi]; else mealLog[mi]=st;
