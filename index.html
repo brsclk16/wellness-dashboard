@@ -1322,7 +1322,16 @@ function renderDD(){
     h+='<div class="meal" style="flex-direction:column;gap:6px">';
     h+='<div style="display:flex;gap:12px;align-items:flex-start">';
     h+='<div class="mt">'+m.t+'</div>';
-    h+='<div style="flex:1"><div class="mn">'+displayName+'</div><div class="md">'+displayDesc+'</div>'+(m.b?'<span class="bdg '+m.b+'">'+m.bt+'</span>':'')+(m.kcal?'<span style="font-size:10px;color:var(--sub);margin-left:6px">~'+m.kcal+' kcal</span>':'')+'</div></div>';
+    h+='<div style="flex:1"><div class="mn">'+displayName+'</div><div class="md">'+displayDesc+'</div>'+(m.b?'<span class="bdg '+m.b+'">'+m.bt+'</span>':'');
+    if(m.kcal){
+      h+='<div style="display:flex;gap:8px;margin-top:5px;flex-wrap:wrap">';
+      h+='<span style="font-size:10px;background:#1a1a2e;color:#60a5fa;padding:2px 7px;border-radius:6px">'+m.kcal+' kcal</span>';
+      if(m.p) h+='<span style="font-size:10px;background:#1a2f1a;color:#4ade80;padding:2px 7px;border-radius:6px">P '+m.p+'g</span>';
+      if(m.k) h+='<span style="font-size:10px;background:#2a1e0f;color:#fb923c;padding:2px 7px;border-radius:6px">K '+m.k+'g</span>';
+      if(m.y) h+='<span style="font-size:10px;background:#2a1a2a;color:#c084fc;padding:2px 7px;border-radius:6px">Y '+m.y+'g</span>';
+      h+='</div>';
+    }
+    h+='</div></div>';
     h+='<div style="display:flex;gap:6px;padding-left:60px">';
     h+='<button style="'+btnBase+'background:'+(st==='yedim'?'#14321f;color:#4ade80;border:1px solid #4ade80':'#1a1a1a;color:#888')+'" onclick="setMeal('+mi+',\'yedim\')">✓ Yedim</button>';
     h+='<button style="'+btnBase+'background:'+(st==='atladim'?'#3a1a1a;color:#f87171;border:1px solid #f87171':'#1a1a1a;color:#888')+'" onclick="setMeal('+mi+',\'atladim\')">✗ Atladım</button>';
