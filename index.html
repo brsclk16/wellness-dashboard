@@ -181,6 +181,14 @@ canvas{width:100%!important}
     <div class="slbl">12 Haftalık Grafik</div>
     <div style="position:relative;height:180px"><canvas id="kch"></canvas></div>
   </div>
+  <div class="card">
+    <div class="slbl">Yedek & Geri Yükle</div>
+    <div style="font-size:12px;color:var(--sub);margin-bottom:10px">Tüm verilerini (antrenman, kilo, takviye) JSON olarak kopyala, güvenli bir yere kaydet.</div>
+    <button class="btn" style="width:100%;margin-bottom:8px" onclick="exportData()">📋 Verileri Kopyala</button>
+    <textarea id="import-area" placeholder='Yedek JSON\'u buraya yapıştır...' style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:12px;padding:10px;min-height:70px;resize:vertical;margin-bottom:8px;font-family:monospace"></textarea>
+    <button class="btn" style="width:100%;background:#2a1e0f;color:var(--orange);border:1px solid var(--orange)" onclick="importData()">⚠ Geri Yükle (mevcut verinin üzerine yazar)</button>
+    <div id="import-msg" style="font-size:12px;margin-top:8px;display:none"></div>
+  </div>
 </div>
 
 <div id="pt" class="pg">
@@ -981,6 +989,61 @@ function showCilt(tab,el){
     });
   }
   c.innerHTML=h;
+}
+
+function exportData(){
+  var allData={};
+  for(var i=0;i<localStorage.length;i++){
+    var k=localStorage.key(i);
+    try{allData[k]=JSON.parse(localStorage.getItem(k));}
+    catch(e){allData[k]=localStorage.getItem(k);}
+  }
+  var json=JSON.stringify(allData,null,2);
+  // Panoya kopyala
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(json).then(function(){
+      alert('✓ Veriler panoya kopyalandı! Notlar uygulamasına yapıştırıp kaydet.');
+    }).catch(function(){
+      fallbackCopy(json);
+    });
+  } else {
+    fallbackCopy(json);
+  }
+}
+
+function fallbackCopy(text){
+  var ta=document.createElement('textarea');
+  ta.value=text;
+  ta.style.position='fixed';
+  ta.style.opacity='0';
+  document.body.appendChild(ta);
+  ta.focus();ta.select();
+  try{document.execCommand('copy');alert('✓ Veriler panoya kopyalandı!');}
+  catch(e){alert('Kopyalanamadı, import alanındaki metni manuel kopyala.');}
+  document.body.removeChild(ta);
+}
+
+function importData(){
+  var txt=document.getElementById('import-area').value.trim();
+  var msgEl=document.getElementById('import-msg');
+  if(!txt){
+    msgEl.style.display='block';msgEl.style.color='var(--red)';
+    msgEl.textContent='Önce JSON yapıştır.';return;
+  }
+  try{
+    var parsed=JSON.parse(txt);
+    var count=0;
+    Object.keys(parsed).forEach(function(k){
+      localStorage.setItem(k,typeof parsed[k]==='string'?parsed[k]:JSON.stringify(parsed[k]));
+      count++;
+    });
+    msgEl.style.display='block';msgEl.style.color='var(--green)';
+    msgEl.textContent='✓ '+count+' kayıt geri yüklendi. Sayfa yenileniyor...';
+    setTimeout(function(){location.reload();},1500);
+  } catch(e){
+    msgEl.style.display='block';msgEl.style.color='var(--red)';
+    msgEl.textContent='Geçersiz JSON. Kontrol et.';
+  }
 }
 
 function saveCiltNot(){ls('cilt_not',document.getElementById('cilt-not').value);}
