@@ -92,8 +92,6 @@ canvas{width:100%!important}
   </div>
   <div class="dscr" id="dscr"></div>
 
-  <!-- Sabah Özeti -->
-  <div id="sabah-ozeti-kart" class="card" style="margin-bottom:12px;border:1px solid #2a2a3a"></div>
   <div class="card" style="margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div class="slbl" style="margin-bottom:0">😴 Uyku & Enerji</div>
@@ -733,7 +731,6 @@ function init(){
   renderSu();
   renderUyku();
   renderOlcGrafikBtns();
-  renderSabahOzeti();
   var simdi=new Date();
   if(simdi.getDay()===0 && simdi.getHours()>=18){
     var ozetKey='hafta_ozet_gosterildi_'+cWk;
@@ -749,8 +746,7 @@ function init(){
 
 // ---- SU TAKİBİ ----
 function getSuKey(){
-  var d=new Date();
-  return 'su_'+d.getFullYear()+'_'+(d.getMonth()+1)+'_'+d.getDate();
+  return 'su_w'+cWk+'_d'+cDay;
 }
 
 function suDegistir(delta){
@@ -877,8 +873,7 @@ function kapatHaftaModal(){
 
 // ---- UYKU & ENERJİ ----
 function getUykuKey(){
-  var d=new Date();
-  return 'uyku_'+d.getFullYear()+'_'+(d.getMonth()+1)+'_'+d.getDate();
+  return 'uyku_w'+cWk+'_d'+cDay;
 }
 
 function renderUyku(){
@@ -1394,6 +1389,8 @@ function wkCh(d){
   upWL();
   renderWD();
   renderK();
+  renderSu();
+  renderUyku();
 }
 
 function upWL(){
@@ -1410,7 +1407,7 @@ function renderDS(){
     var b=document.createElement('button');
     b.className='dp'+(DT[i]==='idman'?' idman':'')+(i===cDay?' on':'');
     b.textContent=d+' '+(DT[i]==='idman'?'💪':'😴');
-    b.onclick=function(){cDay=i;renderDS();renderDD();};
+    b.onclick=function(){cDay=i;renderDS();renderDD();renderSu();renderUyku();};
     c.appendChild(b);
   });
 }
