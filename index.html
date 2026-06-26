@@ -244,9 +244,18 @@ canvas{width:100%!important}
   <p class="psub">Ana hareketlerin haftalık ilerleme grafiği</p>
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="lift-btns"></div>
   <div class="card">
-    <div style="position:relative;height:220px"><canvas id="lift-ch"></canvas></div>
+    <div style="position:relative;height:200px"><canvas id="lift-ch"></canvas></div>
   </div>
   <div class="card" id="lift-stats"></div>
+
+  <div class="card" style="margin-top:4px">
+    <div class="slbl">Vücut Ağırlığı × Güç</div>
+    <div style="font-size:12px;color:var(--sub);margin-bottom:12px">Kilo düştükçe göreli güç artıyor mu?</div>
+    <div style="position:relative;height:200px"><canvas id="korel-ch"></canvas></div>
+  </div>
+  <div class="card" id="korel-stats">
+    <div style="color:var(--sub);font-size:13px">Hem kilo hem antrenman verisi girdikçe analiz burada görünür.</div>
+  </div>
 </div>
 
 <nav class="nav">
@@ -885,13 +894,20 @@ function getBestSet(ss, mi){
 
 function renderLiftChart(li){
   var lift=LIFTS[li];
-  var labels=[],data=[];
+  var labels=[],liftData=[],bodyData=[];
+  var kiloLog=lg('kl',[{w:1,k:88}]);
+
   for(var w=1;w<=cWk;w++){
     labels.push(w+'.');
     var ss=lg('wo_'+lift.wo+'_w'+w,{});
     var best=getBestSet(ss,lift.mi);
-    data.push(best?parseFloat((best.kg).toFixed(1)):null);
+    liftData.push(best?parseFloat((best.kg).toFixed(1)):null);
+
+    var kiloEntry=null;
+    for(var ki=0;ki<kiloLog.length;ki++){if(kiloLog[ki].w===w){kiloEntry=kiloLog[ki];break;}}
+    bodyData.push(kiloEntry?kiloEntry.k:null);
   }
+
   if(liftCh) liftCh.destroy();
   var ctx=document.getElementById('lift-ch');
   if(!ctx) return;
@@ -899,7 +915,7 @@ function renderLiftChart(li){
     type:'line',
     data:{labels:labels,datasets:[{
       label:lift.n,
-      data:data,
+      data:liftData,
       borderColor:'#60a5fa',
       backgroundColor:'rgba(96,165,250,0.1)',
       borderWidth:2.5,
@@ -914,8 +930,9 @@ function renderLiftChart(li){
       x:{ticks:{color:'#888',font:{size:10},maxRotation:0},grid:{display:false}}
     }}
   });
+
   // Stats
-  var valid=data.filter(function(v){return v!==null;});
+  var valid=liftData.filter(function(v){return v!==null;});
   var statsEl=document.getElementById('lift-stats');
   if(valid.length>=2){
     var first=valid[0],last=valid[valid.length-1];
@@ -924,12 +941,123 @@ function renderLiftChart(li){
     statsEl.innerHTML='<div class="mg" style="margin-bottom:0">'
       +'<div class="met"><div class="ml">Başlangıç</div><div class="mv" style="color:var(--sub)">'+first+' kg</div></div>'
       +'<div class="met"><div class="ml">En Son</div><div class="mv" style="color:var(--blue)">'+last+' kg</div></div>'
-      +'<div class="met"><div class="ml">Artış</div><div class="mv" style="color:'+(diff>0?'var(--green)':'var(--red)')+'">+'+(diff>0?diff:diff)+' kg</div></div>'
-      +'<div class="met"><div class="ml">Gelişim</div><div class="mv" style="color:'+(pct>0?'var(--green)':'var(--red)')+'">%'+pct+'</div></div>'
+      +'<div class="met"><div class="ml">Artış</div><div class="mv" style="color:'+(parseFloat(diff)>=0?'var(--green)':'var(--red)')+'">'+( parseFloat(diff)>=0?'+':'')+diff+' kg</div></div>'
+      +'<div class="met"><div class="ml">Gelişim</div><div class="mv" style="color:'+(pct>=0?'var(--green)':'var(--red)')+'">%'+pct+'</div></div>'
       +'</div>';
   } else {
     statsEl.innerHTML='<div style="color:var(--sub);font-size:13px">En az 2 hafta verisi gerekli</div>';
   }
+
+  // Korelasyon grafiği — çift eksen
+  renderKorel(labels, liftData, bodyData, lift.n);
+}
+
+var korelCh=null;
+function renderKorel(labels, liftData, bodyData, liftName){
+  var korelEl=document.getElementById('korel-ch');
+  var statsEl=document.getElementById('korel-stats');
+  if(!korelEl) return;
+
+  // Ortak veri noktaları (her ikisi de null olmayan haftalar)
+  var pairs=[];
+  for(var i=0;i<labels.length;i++){
+    if(liftData[i]!==null && bodyData[i]!==null){
+      pairs.push({w:i+1,lift:liftData[i],body:bodyData[i]});
+    }
+  }
+
+  if(korelCh) korelCh.destroy();
+
+  if(pairs.length<2){
+    statsEl.innerHTML='<div style="color:var(--sub);font-size:13px">Hem kilo hem antrenman verisi olan en az 2 hafta gerekli.</div>';
+    return;
+  }
+
+  korelCh=new Chart(korelEl,{
+    type:'line',
+    data:{
+      labels:labels,
+      datasets:[
+        {
+          label:'Lift (kg)',
+          data:liftData,
+          borderColor:'#60a5fa',
+          backgroundColor:'transparent',
+          borderWidth:2.5,
+          pointRadius:4,
+          pointBackgroundColor:'#60a5fa',
+          tension:0.3,
+          spanGaps:false,
+          yAxisID:'y'
+        },
+        {
+          label:'Vücut (kg)',
+          data:bodyData,
+          borderColor:'#f87171',
+          backgroundColor:'transparent',
+          borderWidth:2,
+          borderDash:[4,3],
+          pointRadius:4,
+          pointBackgroundColor:'#f87171',
+          tension:0.3,
+          spanGaps:false,
+          yAxisID:'y2'
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{
+          display:true,
+          labels:{color:'#888',font:{size:10},boxWidth:12}
+        }
+      },
+      scales:{
+        y:{
+          position:'left',
+          ticks:{color:'#60a5fa',font:{size:9},callback:function(v){return v+' kg';}},
+          grid:{color:'#222'}
+        },
+        y2:{
+          position:'right',
+          ticks:{color:'#f87171',font:{size:9},callback:function(v){return v+' kg';}},
+          grid:{display:false}
+        },
+        x:{ticks:{color:'#888',font:{size:9},maxRotation:0},grid:{display:false}}
+      }
+    }
+  });
+
+  // Korelasyon analizi
+  var liftFirst=pairs[0].lift, liftLast=pairs[pairs.length-1].lift;
+  var bodyFirst=pairs[0].body, bodyLast=pairs[pairs.length-1].body;
+  var liftDiff=+(liftLast-liftFirst).toFixed(1);
+  var bodyDiff=+(bodyFirst-bodyLast).toFixed(1); // pozitif = kilo verdi
+
+  // Göreceli güç: lift/body ağırlığı oranı
+  var relFirst=+(liftFirst/bodyFirst).toFixed(3);
+  var relLast=+(liftLast/bodyLast).toFixed(3);
+  var relDiff=+((relLast-relFirst)*100).toFixed(1);
+
+  var yorumRenk=relDiff>0?'var(--green)':'var(--red)';
+  var yorum=relDiff>2?'Harika — kilo verirken güç artıyor 💪'
+    :relDiff>0?'İyi — göreli güç korunuyor ✅'
+    :relDiff>-2?'Nötr — göreli güç sabit'
+    :'Dikkat — güç kayıpla birlikte düşüyor ⚠';
+
+  statsEl.innerHTML=
+    '<div class="slbl" style="margin-bottom:10px">Korelasyon Analizi — '+liftName+'</div>'+
+    '<div class="mg" style="margin-bottom:12px">'+
+      '<div class="met"><div class="ml">Lift artışı</div><div class="mv" style="color:'+(liftDiff>=0?'var(--green)':'var(--red)')+'">'+(liftDiff>=0?'+':'')+liftDiff+' kg</div></div>'+
+      '<div class="met"><div class="ml">Kilo kaybı</div><div class="mv" style="color:'+(bodyDiff>=0?'var(--green)':'var(--red)')+'">'+(bodyDiff>=0?'-':'+')+(Math.abs(bodyDiff))+' kg</div></div>'+
+      '<div class="met"><div class="ml">Göreceli güç</div><div class="mv" style="color:'+yorumRenk+';font-size:18px">'+(relDiff>=0?'+':'')+relDiff+'%</div></div>'+
+      '<div class="met"><div class="ml">Başlangıç oranı</div><div class="mv" style="color:var(--sub);font-size:18px">×'+relFirst+'</div></div>'+
+    '</div>'+
+    '<div style="background:var(--card2);border-radius:10px;padding:10px 14px;font-size:13px;color:'+yorumRenk+';font-weight:600">'+yorum+'</div>'+
+    '<div style="font-size:11px;color:var(--sub);margin-top:8px">Göreceli güç = lift ağırlığı ÷ vücut ağırlığı. Kilo verirken bu oran artıyorsa kas koruyarak yağ yakıyorsun.</div>';
 }
 
 // ---- ANTRENMAN PROGRESS ----
