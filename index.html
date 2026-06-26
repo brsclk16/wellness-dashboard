@@ -92,7 +92,24 @@ canvas{width:100%!important}
   </div>
   <div class="dscr" id="dscr"></div>
 
-  <!-- Su Takibi -->
+  <!-- Uyku & Enerji -->
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="slbl" style="margin-bottom:0">😴 Uyku & Enerji</div>
+      <span id="uyku-durum-lbl" style="font-size:11px;color:var(--sub)">Bugün girilmedi</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:6px">Uyku Süresi</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="uyku-saatler"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:6px">Sabah Enerjisi</div>
+        <div style="display:flex;gap:6px" id="uyku-enerji"></div>
+      </div>
+    </div>
+    <div id="uyku-kayitli" style="display:none;background:var(--card2);border-radius:10px;padding:10px;font-size:13px"></div>
+  </div>
   <div class="card" style="margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div class="slbl" style="margin-bottom:0">💧 Su Takibi</div>
@@ -223,6 +240,14 @@ canvas{width:100%!important}
   <div class="card">
     <div class="slbl">12 Haftalık Grafik</div>
     <div style="position:relative;height:180px"><canvas id="kch"></canvas></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="slbl" style="margin-bottom:0">Vücut Ölçüleri Grafiği</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="olc-grafik-btns"></div>
+    <div style="position:relative;height:180px"><canvas id="olc-ch"></canvas></div>
+    <div id="olc-grafik-stats" style="margin-top:10px"></div>
   </div>
   <div class="card">
     <div class="slbl">Yedek & Geri Yükle</div>
@@ -610,6 +635,8 @@ function init(){
   }
   checkBackupStatus();
   renderSu();
+  renderUyku();
+  renderOlcGrafikBtns();
   var simdi=new Date();
   if(simdi.getDay()===0 && simdi.getHours()>=18){
     var ozetKey='hafta_ozet_gosterildi_'+cWk;
@@ -747,13 +774,156 @@ function kapatHaftaModal(){
   document.getElementById('hafta-modal').style.display='none';
 }
 
+// ---- UYKU & ENERJİ ----
+function getUykuKey(){
+  var d=new Date();
+  return 'uyku_'+d.getFullYear()+'_'+(d.getMonth()+1)+'_'+d.getDate();
+}
+
+function renderUyku(){
+  var key=getUykuKey();
+  var kayit=lg(key,null);
+  var saatlerEl=document.getElementById('uyku-saatler');
+  var enerjiEl=document.getElementById('uyku-enerji');
+  var durumEl=document.getElementById('uyku-durum-lbl');
+  var kayitliEl=document.getElementById('uyku-kayitli');
+  if(!saatlerEl) return;
+
+  // Saat seçenekleri 4-10
+  var saatler=[4,5,6,7,8,9,10];
+  var saatH='';
+  saatler.forEach(function(s){
+    var sec=kayit&&kayit.saat===s;
+    saatH+='<button onclick="kaydetUyku(\'saat\','+s+')" style="padding:5px 9px;border-radius:8px;border:none;font-size:12px;font-weight:600;cursor:pointer;background:'+(sec?'var(--blue)':'var(--card2)')+';color:'+(sec?'#000':'var(--sub)')+'">'+s+'s</button>';
+  });
+  saatlerEl.innerHTML=saatH;
+
+  // Enerji 1-5
+  var enerjiLabels=['😴','😐','🙂','💪','🔥'];
+  var enerjiH='';
+  for(var i=1;i<=5;i++){
+    var sec2=kayit&&kayit.enerji===i;
+    enerjiH+='<button onclick="kaydetUyku(\'enerji\','+i+')" style="width:34px;height:34px;border-radius:8px;border:none;font-size:16px;cursor:pointer;background:'+(sec2?'var(--green)':'var(--card2)')+'">'+enerjiLabels[i-1]+'</button>';
+  }
+  enerjiEl.innerHTML=enerjiH;
+
+  if(kayit&&kayit.saat&&kayit.enerji){
+    durumEl.textContent='✓ Kaydedildi';
+    durumEl.style.color='var(--green)';
+    kayitliEl.style.display='block';
+    var enerjiRenk=kayit.enerji>=4?'var(--green)':kayit.enerji>=3?'var(--orange)':'var(--red)';
+    kayitliEl.innerHTML='<span style="color:var(--sub)">Uyku: </span><span style="font-weight:700;color:var(--blue)">'+kayit.saat+'s</span>&nbsp;&nbsp;<span style="color:var(--sub)">Enerji: </span><span style="font-weight:700;color:'+enerjiRenk+'">'+enerjiLabels[kayit.enerji-1]+' '+kayit.enerji+'/5</span>';
+  } else {
+    durumEl.textContent='Bugün girilmedi';
+    durumEl.style.color='var(--sub)';
+    kayitliEl.style.display='none';
+  }
+}
+
+function kaydetUyku(alan,deger){
+  var key=getUykuKey();
+  var kayit=lg(key,{});
+  kayit[alan]=deger;
+  // Hafta bazlı de kaydet (grafik için)
+  if(kayit.saat&&kayit.enerji){
+    var haftalikKey='uyku_hf_'+cWk;
+    var hfLog=lg(haftalikKey,[]);
+    var bugun=new Date().getDay();
+    var idx=-1;
+    for(var i=0;i<hfLog.length;i++){if(hfLog[i].gun===bugun){idx=i;break;}}
+    var entry={gun:bugun,saat:kayit.saat,enerji:kayit.enerji};
+    if(idx>=0) hfLog[idx]=entry; else hfLog.push(entry);
+    ls(haftalikKey,hfLog);
+  }
+  ls(key,kayit);
+  renderUyku();
+}
+
+// ---- VÜCUT ÖLÇÜSÜ GRAFİĞİ ----
+var OLC_METRIKLER=[
+  {k:'bel',lbl:'Bel',renk:'#f87171'},
+  {k:'gogus',lbl:'Göğüs',renk:'#60a5fa'},
+  {k:'kalca',lbl:'Kalça',renk:'#c084fc'},
+  {k:'kol',lbl:'Kol',renk:'#4ade80'}
+];
+var cOlcMetrik=0, olcCh=null;
+
+function renderOlcGrafikBtns(){
+  var c=document.getElementById('olc-grafik-btns');
+  if(!c) return;
+  c.innerHTML='';
+  OLC_METRIKLER.forEach(function(m,i){
+    var b=document.createElement('button');
+    b.className='wtb'+(i===cOlcMetrik?' on':'');
+    b.textContent=m.lbl;
+    b.onclick=function(){cOlcMetrik=i;renderOlcGrafikBtns();renderOlcGrafik();};
+    c.appendChild(b);
+  });
+}
+
+function renderOlcGrafik(){
+  var ctx=document.getElementById('olc-ch');
+  var statsEl=document.getElementById('olc-grafik-stats');
+  if(!ctx) return;
+
+  var metrik=OLC_METRIKLER[cOlcMetrik];
+  var olcLog=lg('olc_log',[]);
+  var labels=[],data=[];
+
+  for(var w=1;w<=12;w++){
+    labels.push(w+'.');
+    var entry=null;
+    for(var i=0;i<olcLog.length;i++){if(olcLog[i].w===w){entry=olcLog[i];break;}}
+    data.push(entry&&entry[metrik.k]?parseFloat(entry[metrik.k]):null);
+  }
+
+  if(olcCh) olcCh.destroy();
+  olcCh=new Chart(ctx,{
+    type:'line',
+    data:{labels:labels,datasets:[{
+      label:metrik.lbl+' (cm)',
+      data:data,
+      borderColor:metrik.renk,
+      backgroundColor:metrik.renk.replace(')',',0.1)').replace('rgb','rgba'),
+      borderWidth:2.5,
+      pointRadius:5,
+      pointBackgroundColor:metrik.renk,
+      tension:0.3,
+      fill:true,
+      spanGaps:false
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{ticks:{color:'#888',font:{size:10},callback:function(v){return v+' cm';}},grid:{color:'#222'}},
+        x:{ticks:{color:'#888',font:{size:9},maxRotation:0},grid:{display:false}}
+      }
+    }
+  });
+
+  // Stats
+  var valid=data.map(function(v,i){return v!==null?{w:i+1,v:v}:null;}).filter(Boolean);
+  if(valid.length>=2){
+    var first=valid[0],last=valid[valid.length-1];
+    var diff=(last.v-first.v).toFixed(1);
+    var iyi=metrik.k==='kol'?parseFloat(diff)>0:parseFloat(diff)<0; // kol artmalı, diğerleri düşmeli
+    statsEl.innerHTML='<div class="mg" style="margin-bottom:0">'
+      +'<div class="met"><div class="ml">Başlangıç</div><div class="mv" style="color:var(--sub);font-size:20px">'+first.v+' cm</div></div>'
+      +'<div class="met"><div class="ml">En Son</div><div class="mv" style="color:'+metrik.renk+';font-size:20px">'+last.v+' cm</div></div>'
+      +'<div class="met"><div class="ml">Değişim</div><div class="mv" style="color:'+(iyi?'var(--green)':'var(--red)')+';font-size:20px">'+(parseFloat(diff)>0?'+':'')+diff+' cm</div></div>'
+      +'</div>';
+  } else {
+    statsEl.innerHTML='<div style="color:var(--sub);font-size:13px">En az 2 hafta ölçüsü gerekli</div>';
+  }
+}
+
 function sp(id,el){
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on');});
   var map={g:'pg',a:'pa',k:'pk',t:'pt',ci:'pci',g2:'pg2'};
   document.getElementById(map[id]).classList.add('on');
   el.classList.add('on');
-  if(id==='k') renderK();
+  if(id==='k'){renderK();renderOlcGrafik();}
   if(id==='ci'){showCilt('am',document.getElementById('cilt-am'));loadCiltNot();}
   if(id==='g2') renderLiftChart(cLift);
   if(id==='t') renderSupChecks();
