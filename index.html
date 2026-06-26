@@ -1319,29 +1319,76 @@ function renderDD(){
   });
   var hedefKcal=DT[cDay]==='idman'?1800:1600;
   var hedefP=DT[cDay]==='idman'?170:150;
+  var hedefK=DT[cDay]==='idman'?180:140;
+  var hedefY=DT[cDay]==='idman'?60:55;
   var kcalPct=Math.min(100,Math.round((yenilenKcal/hedefKcal)*100));
+  var planPct=Math.min(100,Math.round((planKcal/hedefKcal)*100));
+  var kcalFark=yenilenKcal-planKcal;
   var kcalRenk=yenilenKcal>hedefKcal+200?'var(--red)':yenilenKcal<hedefKcal-300?'var(--orange)':'var(--green)';
   var pRenk=yenilenP>=hedefP?'var(--green)':yenilenP>=hedefP*0.8?'var(--orange)':'var(--red)';
 
-  h+='<div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:12px">';
-  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
-  h+='<span style="font-size:12px;color:var(--sub)">🔥 Kalori</span>';
+  // Kaç öğünde gerçek veri var?
+  var gercekSayisi=0;
+  var mi3=0;
+  meals.forEach(function(m){
+    if(!m.n){return;}
+    if(lg('gercek_'+cWk+'_'+cDay+'_'+mi3,null)) gercekSayisi++;
+    mi3++;
+  });
+
+  h+='<div style="background:var(--card2);border-radius:12px;padding:12px;margin-bottom:12px">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+  h+='<span style="font-size:12px;color:var(--sub)">🔥 Kalori'+(gercekSayisi>0?' <span style="color:var(--green);font-size:10px">📸 '+gercekSayisi+' gerçek veri</span>':'')+'</span>';
   h+='<span style="font-size:13px;font-weight:700;color:'+kcalRenk+'">'+yenilenKcal+' / '+hedefKcal+' kcal</span></div>';
-  h+='<div style="background:#333;border-radius:20px;height:5px;overflow:hidden;margin-bottom:10px">';
-  h+='<div style="height:5px;border-radius:20px;background:'+kcalRenk+';width:'+kcalPct+'%;transition:width 0.3s"></div></div>';
+
+  // Çift katmanlı progress bar: plan (gri) + gerçek (renkli)
+  h+='<div style="position:relative;background:#333;border-radius:20px;height:8px;overflow:hidden;margin-bottom:6px">';
+  h+='<div style="position:absolute;top:0;left:0;height:8px;border-radius:20px;background:#444;width:'+planPct+'%;"></div>';
+  h+='<div style="position:absolute;top:0;left:0;height:8px;border-radius:20px;background:'+kcalRenk+';width:'+kcalPct+'%;transition:width 0.3s"></div>';
+  h+='</div>';
+
+  // Plan vs gerçek fark satırı
+  if(gercekSayisi>0 && kcalFark!==0){
+    var farkRenk=kcalFark>0?'var(--red)':'var(--green)';
+    var farkIkon=kcalFark>0?'▲':'▼';
+    h+='<div style="font-size:11px;margin-bottom:8px;padding:5px 8px;background:#111;border-radius:8px;display:flex;justify-content:space-between">';
+    h+='<span style="color:var(--sub)">Plan: <span style="color:var(--text)">'+(planKcal)+' kcal</span></span>';
+    h+='<span style="color:'+farkRenk+';font-weight:700">'+farkIkon+' '+(kcalFark>0?'+':'')+kcalFark+' kcal fark</span>';
+    h+='</div>';
+  }
+
+  // Makro grid — hedef barları ile
   h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">';
-  h+='<div style="text-align:center;background:#111;border-radius:8px;padding:6px 4px">';
-  h+='<div style="font-size:10px;color:var(--sub)">Protein</div>';
-  h+='<div style="font-size:16px;font-weight:700;color:'+pRenk+'">'+yenilenP+'g</div>';
+
+  // Protein
+  var pPct=Math.min(100,Math.round((yenilenP/hedefP)*100));
+  h+='<div style="background:#111;border-radius:8px;padding:8px 6px">';
+  h+='<div style="font-size:10px;color:var(--sub);margin-bottom:3px">Protein</div>';
+  h+='<div style="font-size:18px;font-weight:700;color:'+pRenk+'">'+yenilenP+'g</div>';
+  h+='<div style="background:#333;border-radius:10px;height:3px;overflow:hidden;margin:4px 0">';
+  h+='<div style="height:3px;border-radius:10px;background:'+pRenk+';width:'+pPct+'%"></div></div>';
   h+='<div style="font-size:10px;color:var(--sub)">hedef '+hedefP+'g</div></div>';
-  h+='<div style="text-align:center;background:#111;border-radius:8px;padding:6px 4px">';
-  h+='<div style="font-size:10px;color:var(--sub)">Karb</div>';
-  h+='<div style="font-size:16px;font-weight:700;color:var(--blue)">'+yenilenK+'g</div>';
-  h+='<div style="font-size:10px;color:var(--sub)">plan '+planK+'g</div></div>';
-  h+='<div style="text-align:center;background:#111;border-radius:8px;padding:6px 4px">';
-  h+='<div style="font-size:10px;color:var(--sub)">Yağ</div>';
-  h+='<div style="font-size:16px;font-weight:700;color:var(--orange)">'+yenilenY+'g</div>';
-  h+='<div style="font-size:10px;color:var(--sub)">plan '+planY+'g</div></div>';
+
+  // Karb
+  var kPct=Math.min(100,Math.round((yenilenK/hedefK)*100));
+  var kRenk=yenilenK>hedefK+30?'var(--red)':yenilenK<hedefK*0.6?'var(--orange)':'var(--blue)';
+  h+='<div style="background:#111;border-radius:8px;padding:8px 6px">';
+  h+='<div style="font-size:10px;color:var(--sub);margin-bottom:3px">Karb</div>';
+  h+='<div style="font-size:18px;font-weight:700;color:'+kRenk+'">'+yenilenK+'g</div>';
+  h+='<div style="background:#333;border-radius:10px;height:3px;overflow:hidden;margin:4px 0">';
+  h+='<div style="height:3px;border-radius:10px;background:'+kRenk+';width:'+kPct+'%"></div></div>';
+  h+='<div style="font-size:10px;color:var(--sub)">hedef '+hedefK+'g</div></div>';
+
+  // Yağ
+  var yPct=Math.min(100,Math.round((yenilenY/hedefY)*100));
+  var yRenk=yenilenY>hedefY+15?'var(--red)':'var(--orange)';
+  h+='<div style="background:#111;border-radius:8px;padding:8px 6px">';
+  h+='<div style="font-size:10px;color:var(--sub);margin-bottom:3px">Yağ</div>';
+  h+='<div style="font-size:18px;font-weight:700;color:'+yRenk+'">'+yenilenY+'g</div>';
+  h+='<div style="background:#333;border-radius:10px;height:3px;overflow:hidden;margin:4px 0">';
+  h+='<div style="height:3px;border-radius:10px;background:'+yRenk+';width:'+yPct+'%"></div></div>';
+  h+='<div style="font-size:10px;color:var(--sub)">hedef '+hedefY+'g</div></div>';
+
   h+='</div></div>';
 
   var mi=0;
@@ -1381,6 +1428,8 @@ function renderDD(){
 
     // Makro gösterimi — gerçek veri varsa onu, yoksa plan değerlerini göster
     if(gercek){
+      var gFark=gercek.kcal-(m.kcal||0);
+      var gFarkRenk=gFark>100?'var(--red)':gFark<-100?'var(--green)':'var(--sub)';
       h+='<div style="display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;align-items:center">';
       h+='<span style="font-size:10px;background:#14321f;color:#4ade80;padding:2px 7px;border-radius:6px;font-weight:700">📸 Gerçek</span>';
       h+='<span style="font-size:10px;background:#1a1a2e;color:#60a5fa;padding:2px 7px;border-radius:6px">'+gercek.kcal+' kcal</span>';
@@ -1389,6 +1438,11 @@ function renderDD(){
       if(gercek.y) h+='<span style="font-size:10px;background:#2a1a2a;color:#c084fc;padding:2px 7px;border-radius:6px">Y '+gercek.y+'g</span>';
       h+='<button onclick="silGercek('+mi+')" style="font-size:10px;background:transparent;border:none;color:var(--sub);cursor:pointer;padding:0">✕</button>';
       h+='</div>';
+      if(m.kcal&&Math.abs(gFark)>50){
+        h+='<div style="font-size:11px;margin-top:4px;color:'+gFarkRenk+'">';
+        h+='Plan: '+(m.kcal)+' kcal → '+(gFark>0?'+':'')+gFark+' kcal '+(gFark>0?'fazla':'az');
+        h+='</div>';
+      }
     } else if(m.kcal){
       h+='<div style="display:flex;gap:8px;margin-top:5px;flex-wrap:wrap">';
       h+='<span style="font-size:10px;background:#1a1a2e;color:#60a5fa;padding:2px 7px;border-radius:6px">'+m.kcal+' kcal</span>';
