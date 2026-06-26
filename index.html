@@ -2102,20 +2102,36 @@ function renderWD(){
       var val=ss[kk]||'';
       var prevVal=prevSS[kk]||'';
       var prog=getProgress(val,prevVal);
-      var borderCol=prog==='green'?'#4ade80':prog==='yellow'?'#fb923c':prog==='red'?'#f87171':'var(--border)';
-      var prevHint=prevVal?'<span style="font-size:10px;color:var(--sub);margin-left:4px">Hf'+(cWk-1)+': '+prevVal+'</span>':'';
-      h+='<div class="sr"><span class="slb">'+(sc>1?(si+1)+'. set':'Set')+'</span>';
-      h+='<input class="sinp" type="text" placeholder="kgxtekrar" value="'+val+'" data-mi="'+mi+'" data-si="'+si+'" oninput="svS(this)" style="border-color:'+borderCol+'">';
-      h+='<span class="sok" id="ok_'+mi+'_'+si+'" style="font-size:14px;font-weight:700">✓</span>'+prevHint+'</div>';
+      var borderCol=prog==='green'?'var(--green)':prog==='yellow'?'var(--orange)':prog==='red'?'var(--red)':'var(--border2)';
+
+      // Val'ı kg ve rep'e ayır
       var parsedVal=parseSet(val);
+      var kgVal=parsedVal?parsedVal.kg:'';
+      var repVal=parsedVal?parsedVal.rep:'';
+
+      var prevHint=prevVal?'<span style="font-size:10px;color:var(--sub)">Önceki: '+prevVal+'</span>':'';
+
+      h+='<div class="sr" style="gap:6px">';
+      h+='<span class="slb">'+(sc>1?(si+1)+'. set':'Set')+'</span>';
+      // KG input
+      h+='<div style="display:flex;gap:4px;align-items:center">';
+      h+='<input class="sinp" type="number" inputmode="decimal" placeholder="kg" value="'+kgVal+'" data-mi="'+mi+'" data-si="'+si+'" data-field="kg" oninput="svS2(this)" style="width:70px;border-color:'+borderCol+';text-align:center" step="2.5">';
+      h+='<span style="font-size:12px;color:var(--sub);font-weight:500">×</span>';
+      // REP input
+      h+='<input class="sinp" type="number" inputmode="numeric" placeholder="rep" value="'+repVal+'" data-mi="'+mi+'" data-si="'+si+'" data-field="rep" oninput="svS2(this)" style="width:56px;border-color:'+borderCol+';text-align:center">';
+      h+='</div>';
+      h+='<span class="sok" id="ok_'+mi+'_'+si+'" style="font-size:16px;font-weight:700">✓</span>';
+      h+='</div>';
+      h+='<div style="padding-left:44px;margin-bottom:2px">'+prevHint+'</div>';
+
       var calcVal=parsedVal?calcProgression(parsedVal.kg,parsedVal.rep):null;
       var infoContent='';
       if(calcVal&&!calcVal.warn){
-        infoContent='<span style="color:#888">1RM: ~'+calcVal.rm+' kg</span>&nbsp;·&nbsp;<span style="color:#4ade80">RIR 1: '+calcVal.rir1+' kg×6</span>&nbsp;·&nbsp;<span style="color:#f87171">Tukenis: '+calcVal.tukenis+' kg×6</span>&nbsp;·&nbsp;<span style="color:#60a5fa">Sonraki: '+calcVal.nextStep+' kg×6</span>';
+        infoContent='<span style="color:var(--sub)">1RM: ~'+calcVal.rm+' kg</span>&nbsp;·&nbsp;<span style="color:var(--green)">RIR 1: '+calcVal.rir1+' kg×6</span>&nbsp;·&nbsp;<span style="color:var(--red)">Tükeniş: '+calcVal.tukenis+' kg×6</span>&nbsp;·&nbsp;<span style="color:var(--blue)">Sonraki: '+calcVal.nextStep+' kg×6</span>';
       } else if(calcVal&&calcVal.warn){
-        infoContent='<span style="color:#fb923c">⚠ '+calcVal.warn+'</span>';
+        infoContent='<span style="color:var(--orange)">⚠ '+calcVal.warn+'</span>';
       }
-      h+='<div id="prog_'+mi+'_'+si+'" style="font-size:11px;padding:4px 0 2px 44px;line-height:1.6;'+(infoContent?'display:block':'display:none')+'">'+infoContent+'</div>';
+      h+='<div id="prog_'+mi+'_'+si+'" style="font-size:11px;padding:2px 0 6px 44px;line-height:1.6;'+(infoContent?'display:block':'display:none')+'">'+infoContent+'</div>';
     }
     } // end if cardio
     h+='</div></div>';
@@ -2167,42 +2183,104 @@ function getProgress(cur,prev){
   return 'red';
 }
 
+function svS2(inp){
+  var mi=inp.dataset.mi, si=inp.dataset.si, field=inp.dataset.field;
+  var k='wo_'+cWO+'_w'+cWk;
+  var s=lg(k,{});
+  var key=mi+'_'+si;
+
+  // Mevcut değeri parse et
+  var cur=parseSet(s[key]||'');
+  var kgVal=cur?cur.kg:'';
+  var repVal=cur?cur.rep:'';
+
+  // Hangi field güncellendiğini bul
+  if(field==='kg') kgVal=inp.value;
+  else repVal=inp.value;
+
+  // Her iki değer de doluysa kaydet
+  if(kgVal!==''&&repVal!==''){
+    s[key]=kgVal+'x'+repVal;
+  } else if(kgVal!==''||repVal!==''){
+    s[key]=kgVal+'x'+repVal; // Eksik olsa da kaydet
+  } else {
+    delete s[key];
+  }
+  ls(k,s);
+  updateWoProgress();
+
+  // Geçen haftayla kıyasla
+  if(kgVal!==''&&repVal!==''){
+    var fullVal=kgVal+'x'+repVal;
+    var prevK='wo_'+cWO+'_w'+(cWk-1);
+    var prev=lg(prevK,{});
+    var prevVal=prev[key];
+    var prog=getProgress(fullVal,prevVal);
+    var ok=document.getElementById('ok_'+mi+'_'+si);
+    if(ok){
+      if(prog==='green'){ok.textContent='↑';ok.style.color='var(--green)';}
+      else if(prog==='yellow'){ok.textContent='→';ok.style.color='var(--orange)';}
+      else if(prog==='red'){ok.textContent='↓';ok.style.color='var(--red)';}
+      else{ok.textContent='✓';ok.style.color='var(--green)';}
+      ok.style.opacity='1';
+      setTimeout(function(){ok.style.opacity='0';},2000);
+    }
+
+    // 1RM ve ilerleme bilgisi
+    var parsed=parseSet(fullVal);
+    var infoEl=document.getElementById('prog_'+mi+'_'+si);
+    if(infoEl&&parsed){
+      var calc=calcProgression(parsed.kg,parsed.rep);
+      if(calc.warn){
+        infoEl.innerHTML='<span style="color:var(--orange)">⚠ '+calc.warn+'</span>';
+      } else {
+        infoEl.innerHTML=
+          '<span style="color:var(--sub)">1RM: ~'+calc.rm+' kg</span>'+
+          '&nbsp;·&nbsp;<span style="color:var(--green)">RIR 1: '+calc.rir1+' kg×6</span>'+
+          '&nbsp;·&nbsp;<span style="color:var(--red)">Tükeniş: '+calc.tukenis+' kg×6</span>'+
+          '&nbsp;·&nbsp;<span style="color:var(--blue)">Sonraki: '+calc.nextStep+' kg×6</span>';
+      }
+      infoEl.style.display='block';
+
+      // Border rengini güncelle
+      var borderCol=prog==='green'?'var(--green)':prog==='yellow'?'var(--orange)':prog==='red'?'var(--red)':'var(--border2)';
+      var inputs=document.querySelectorAll('[data-mi="'+mi+'"][data-si="'+si+'"]');
+      inputs.forEach(function(i){i.style.borderColor=borderCol;});
+    }
+  }
+}
+
 function svS(inp){
   var mi=inp.dataset.mi,si=inp.dataset.si,k='wo_'+cWO+'_w'+cWk;
   var s=lg(k,{});
   s[mi+'_'+si]=inp.value;
   ls(k,s);
   updateWoProgress();
-
-  // Progress vs last week
   var prevK='wo_'+cWO+'_w'+(cWk-1);
   var prev=lg(prevK,{});
   var prevVal=prev[mi+'_'+si];
   var prog=getProgress(inp.value,prevVal);
-
   var ok=document.getElementById('ok_'+mi+'_'+si);
   if(ok){
-    if(prog==='green'){ok.textContent='↑';ok.style.color='#4ade80';}
-    else if(prog==='yellow'){ok.textContent='→';ok.style.color='#fb923c';}
-    else if(prog==='red'){ok.textContent='↓';ok.style.color='#f87171';}
-    else{ok.textContent='✓';ok.style.color='#4ade80';}
+    if(prog==='green'){ok.textContent='↑';ok.style.color='var(--green)';}
+    else if(prog==='yellow'){ok.textContent='→';ok.style.color='var(--orange)';}
+    else if(prog==='red'){ok.textContent='↓';ok.style.color='var(--red)';}
+    else{ok.textContent='✓';ok.style.color='var(--green)';}
     ok.style.opacity='1';
     setTimeout(function(){ok.style.opacity='0';},2000);
   }
-
-  // Show 1RM + progression info
   var parsed=parseSet(inp.value);
   var infoEl=document.getElementById('prog_'+mi+'_'+si);
-  if(infoEl && parsed){
-    var calc=calcProgression(parsed.kg, parsed.rep);
+  if(infoEl&&parsed){
+    var calc=calcProgression(parsed.kg,parsed.rep);
     if(calc.warn){
-      infoEl.innerHTML='<span style="color:'+calc.color+'">⚠ '+calc.warn+'</span>';
+      infoEl.innerHTML='<span style="color:var(--orange)">⚠ '+calc.warn+'</span>';
     } else {
       infoEl.innerHTML=
-        '<span style="color:#888">1RM: ~'+calc.rm+' kg</span>' +
-        '&nbsp;·&nbsp;<span style="color:#4ade80">RIR 1: '+calc.rir1+' kg×6</span>' +
-        '&nbsp;·&nbsp;<span style="color:#f87171">Tukenis: '+calc.tukenis+' kg×6</span>' +
-        '&nbsp;·&nbsp;<span style="color:#60a5fa">Sonraki: '+calc.nextStep+' kg×6</span>';
+        '<span style="color:var(--sub)">1RM: ~'+calc.rm+' kg</span>'+
+        '&nbsp;·&nbsp;<span style="color:var(--green)">RIR 1: '+calc.rir1+' kg×6</span>'+
+        '&nbsp;·&nbsp;<span style="color:var(--red)">Tükeniş: '+calc.tukenis+' kg×6</span>'+
+        '&nbsp;·&nbsp;<span style="color:var(--blue)">Sonraki: '+calc.nextStep+' kg×6</span>';
     }
     infoEl.style.display='block';
   } else if(infoEl){
