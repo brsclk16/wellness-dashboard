@@ -1391,7 +1391,27 @@ function renderDD(){
 
   h+='</div></div>';
 
-  var mi=0;
+  // Kalori açığı ve yağ kaybı hesabı
+  var tdee=DT[cDay]==='idman'?2400:2100; // Tahmini günlük enerji harcaması
+  var acik=tdee-yenilenKcal;
+  var acikRenk=acik>0?'var(--green)':acik<-200?'var(--red)':'var(--orange)';
+  var yagGram=acik>0?(acik/7700*1000).toFixed(1):null; // 7700 kcal = 1 kg yağ
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">';
+  h+='<div style="background:var(--card2);border-radius:10px;padding:10px;text-align:center">';
+  h+='<div style="font-size:10px;color:var(--sub);margin-bottom:4px">Kalori Açığı</div>';
+  h+='<div style="font-size:22px;font-weight:700;color:'+acikRenk+'">'+(acik>0?'-':'+')+(Math.abs(acik))+' kcal</div>';
+  h+='<div style="font-size:10px;color:var(--sub);margin-top:2px">TDEE: ~'+tdee+' kcal</div>';
+  h+='</div>';
+  h+='<div style="background:var(--card2);border-radius:10px;padding:10px;text-align:center">';
+  h+='<div style="font-size:10px;color:var(--sub);margin-bottom:4px">Günlük Yağ Kaybı</div>';
+  if(yagGram&&acik>0){
+    h+='<div style="font-size:22px;font-weight:700;color:var(--green)">'+yagGram+' g</div>';
+    h+='<div style="font-size:10px;color:var(--sub);margin-top:2px">≈ '+(acik/7700*7).toFixed(2)+' g/gün × 7</div>';
+  } else {
+    h+='<div style="font-size:18px;font-weight:700;color:var(--red)">Açık yok</div>';
+    h+='<div style="font-size:10px;color:var(--sub);margin-top:2px">Kalori fazlası var</div>';
+  }
+  h+='</div></div>';
   meals.forEach(function(m,idx){
     if(!m.n){
       h+='<div style="padding:3px 0 3px 60px;font-size:12px;color:#888">'+m.d+(m.b?'&nbsp;<span class="bdg '+m.b+'">'+m.bt+'</span>':'')+'</div>';
