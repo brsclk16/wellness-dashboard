@@ -411,10 +411,39 @@ input{-webkit-appearance:none}
     <div id="bel-boy-result" style="font-size:14px;color:var(--sub)">Bel ölçüsü girdikten sonra hesaplanır (Boy: 179 cm)</div>
   </div>
   <div class="card">
-    <div class="slbl">Fotoğraf hatırlatması</div>
-    <div style="font-size:13px;color:var(--sub);margin-bottom:8px">Her Pazar sabahı aynı koşulda fotoğraf çek — aynı ışık, aynı poz, aynı saat. Değişimi en net bu şekilde görürsün.</div>
-    <div id="foto-last" style="font-size:12px;color:var(--sub)"></div>
-    <button class="btn" style="margin-top:8px;width:100%;background:var(--card2);color:var(--text)" onclick="fotoKaydet()">📷 Bugün fotoğraf çektim</button>
+    <div class="slbl">📸 Haftalık Vücut Fotoğrafı</div>
+    <div style="font-size:13px;color:var(--sub);margin-bottom:10px">Her Pazar sabahı aynı koşulda — aynı ışık, aynı poz, aynı saat. AI görsel değişimi analiz eder.</div>
+    <div id="foto-last" style="font-size:12px;color:var(--sub);margin-bottom:10px"></div>
+
+    <!-- Fotoğraf yükleme alanı -->
+    <div id="vucut-foto-alan" style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;margin-bottom:10px;position:relative;overflow:hidden;cursor:pointer">
+      <div style="font-size:28px;margin-bottom:6px">📷</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:3px">Fotoğraf Seç</div>
+      <div style="font-size:11px;color:var(--sub)">Galeriden seç veya çek</div>
+      <input type="file" id="vucut-foto-input" accept="image/*" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer" onchange="vucutFotoAnaliz(this)">
+    </div>
+
+    <!-- Önizleme -->
+    <div id="vucut-foto-onizleme" style="display:none;margin-bottom:10px">
+      <img id="vucut-foto-img" style="width:100%;border-radius:10px;max-height:220px;object-fit:cover">
+    </div>
+
+    <!-- Yükleniyor -->
+    <div id="vucut-foto-yukleniyor" style="display:none;text-align:center;padding:16px;color:var(--sub);font-size:13px">
+      🔍 Fotoğraf analiz ediliyor...
+    </div>
+
+    <!-- AI Analiz Sonucu -->
+    <div id="vucut-foto-sonuc" style="display:none">
+      <div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:8px">
+        <div style="font-size:11px;color:var(--blue);font-weight:600;margin-bottom:6px">🤖 AI Görsel Analizi</div>
+        <div id="vucut-foto-analiz-text" style="font-size:13px;color:var(--text2);line-height:1.6"></div>
+      </div>
+      <button onclick="vucutFotoKaydet()" style="width:100%;background:var(--green);color:#000;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">✓ Bu Haftanın Fotoğrafı Olarak Kaydet</button>
+    </div>
+
+    <!-- Geçmiş fotoğraflar -->
+    <div id="vucut-foto-gecmis" style="margin-top:10px"></div>
   </div>
   <div class="card"><div class="slbl">Kayıtlar</div><div id="klog"></div></div>
   <div class="card">
@@ -2254,13 +2283,14 @@ function renderK(){
     belBoyEl.innerHTML='<span style="font-size:24px;font-weight:700;color:'+oranRenk+'">'+oran+'</span><span style="font-size:13px;color:var(--sub);margin-left:8px">'+oranYorum+'</span><div style="font-size:11px;color:var(--sub);margin-top:4px">Hedef: 0.50 altı · Bel: '+olcLatest.bel+' cm / Boy: 179 cm</div>';
   }
 
-  // Fotoğraf hatırlatması
+  // Fotoğraf geçmişi
   var fotoLog=lg('foto_log',[]);
   var fotoEl=document.getElementById('foto-last');
-  if(fotoLog.length){
+  if(fotoLog.length&&fotoEl){
     var last=fotoLog[fotoLog.length-1];
     fotoEl.innerHTML='Son fotoğraf: <span style="color:var(--green)">'+last.tarih+'</span> ('+last.hafta+'. Hafta)';
   }
+  renderVucutFotoGecmis();
 
   // Grafik
   var labels=[];
@@ -3050,7 +3080,124 @@ function loadAiOneri(){
   }
 }
 
-// ---- BİYORİTM ----
+// ---- VÜCUT FOTOĞRAFI ANALİZİ ----
+var vucutFotoBase64=null;
+
+function vucutFotoAnaliz(input){
+  if(!input.files||!input.files[0]) return;
+  var file=input.files[0];
+  var reader=new FileReader();
+  reader.onload=function(e){
+    vucutFotoBase64=e.target.result;
+    var base64=e.target.result.split(',')[1];
+    var mimeType=file.type||'image/jpeg';
+
+    // Önizleme
+    document.getElementById('vucut-foto-img').src=e.target.result;
+    document.getElementById('vucut-foto-onizleme').style.display='block';
+    document.getElementById('vucut-foto-alan').style.display='none';
+    document.getElementById('vucut-foto-yukleniyor').style.display='block';
+    document.getElementById('vucut-foto-sonuc').style.display='none';
+
+    // Önceki haftanın analizini bağlam için çek
+    var fotoLog=lg('vucut_foto_log',[]);
+    var oncekiAnaliz=fotoLog.length>0?fotoLog[fotoLog.length-1].analiz:'(İlk fotoğraf — karşılaştırma yok)';
+    var kiloLog=lg('kl',[{w:1,k:88}]);
+    var sonKilo=kiloLog.length?kiloLog[kiloLog.length-1].k:88;
+    var olcLog=lg('olc_log',[]);
+    var sonOlc=olcLog.length?olcLog[olcLog.length-1]:null;
+
+    var prompt='Sen bir fitness koçusun. Bu sporcunun vücut fotoğrafını analiz et.\n\n'+
+      'Sporcu: Barış Çelik, 26 yaş, erkek, boy 179cm\n'+
+      'Mevcut kilo: '+sonKilo+' kg (başlangıç: 88 kg, hedef: 75 kg)\n'+
+      (sonOlc?'Son ölçüler: Bel '+sonOlc.bel+'cm, Göğüs '+sonOlc.gogus+'cm, Kol '+sonOlc.kol+'cm\n':'')+
+      'Program: Güray Hypertrophy Max, '+cWk+'. hafta\n\n'+
+      'Önceki haftanın analizi: '+oncekiAnaliz+'\n\n'+
+      'Şimdi bu fotoğrafı analiz et ve Türkçe yaz:\n'+
+      '1. Genel fiziksel görünüm (kas tanımı, yağ dağılımı)\n'+
+      '2. Önceki haftaya kıyasla görünür değişim (varsa)\n'+
+      '3. En belirgin iyileşme bölgesi\n'+
+      '4. Dikkat çeken bir nokta\n\n'+
+      'Max 100 kelime, doğrudan ve dürüst ol. Abartmadan, gerçekçi değerlendirme yap.';
+
+    fetch('https://morello-ai-proxy.brsclk16.workers.dev',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:400,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image',source:{type:'base64',media_type:mimeType,data:base64}},
+            {type:'text',text:prompt}
+          ]
+        }]
+      })
+    })
+    .then(function(r){return r.json();})
+    .then(function(data){
+      document.getElementById('vucut-foto-yukleniyor').style.display='none';
+      var text=data.content&&data.content[0]?data.content[0].text:'Analiz alınamadı.';
+      text=text.replace(/\n/g,'<br>');
+      document.getElementById('vucut-foto-analiz-text').innerHTML=text;
+      document.getElementById('vucut-foto-sonuc').style.display='block';
+      // Kaydedilecek analizi sakla
+      vucutFotoBase64=e.target.result;
+      document.getElementById('vucut-foto-sonuc').dataset.analiz=data.content[0].text;
+    })
+    .catch(function(){
+      document.getElementById('vucut-foto-yukleniyor').style.display='none';
+      document.getElementById('vucut-foto-analiz-text').innerHTML='<span style="color:var(--red)">Bağlantı hatası. İnternet bağlantını kontrol et.</span>';
+      document.getElementById('vucut-foto-sonuc').style.display='block';
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function vucutFotoKaydet(){
+  var analiz=document.getElementById('vucut-foto-sonuc').dataset.analiz||'';
+  var d=new Date();
+  var tarih=d.toLocaleDateString('tr-TR');
+  var fotoLog=lg('vucut_foto_log',[]);
+  // Aynı hafta varsa güncelle
+  var idx=-1;
+  for(var i=0;i<fotoLog.length;i++){if(fotoLog[i].hafta===cWk){idx=i;break;}}
+  var entry={hafta:cWk,tarih:tarih,analiz:analiz};
+  if(idx>=0) fotoLog[idx]=entry; else fotoLog.push(entry);
+  ls('vucut_foto_log',fotoLog);
+  // Eski foto_log ile uyumluluk
+  var eski=lg('foto_log',[]);
+  var eskiIdx=-1;
+  for(var i=0;i<eski.length;i++){if(eski[i].hafta===cWk){eskiIdx=i;break;}}
+  if(eskiIdx>=0) eski[eskiIdx]={hafta:cWk,tarih:tarih};
+  else eski.push({hafta:cWk,tarih:tarih});
+  ls('foto_log',eski);
+  // UI sıfırla
+  document.getElementById('vucut-foto-alan').style.display='block';
+  document.getElementById('vucut-foto-onizleme').style.display='none';
+  document.getElementById('vucut-foto-sonuc').style.display='none';
+  document.getElementById('vucut-foto-input').value='';
+  renderVucutFotoGecmis();
+  alert('✓ '+cWk+'. hafta fotoğrafı kaydedildi!');
+}
+
+function renderVucutFotoGecmis(){
+  var el=document.getElementById('vucut-foto-gecmis');
+  if(!el) return;
+  var fotoLog=lg('vucut_foto_log',[]);
+  if(!fotoLog.length){el.innerHTML='';return;}
+  var h='<div style="font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Geçmiş Analizler</div>';
+  fotoLog.slice().reverse().slice(0,3).forEach(function(f){
+    h+='<div style="background:var(--card2);border-radius:10px;padding:10px 12px;margin-bottom:6px">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+    h+='<span style="font-size:12px;font-weight:600">'+f.hafta+'. Hafta</span>';
+    h+='<span style="font-size:11px;color:var(--sub)">'+f.tarih+'</span></div>';
+    h+='<div style="font-size:12px;color:var(--sub);line-height:1.5">'+f.analiz.slice(0,120)+(f.analiz.length>120?'...':'')+'</div>';
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
 function biyoritmHesapla(dogumTarihi, hedefTarih){
   var msGun=24*60*60*1000;
   var gunFark=Math.round((hedefTarih-dogumTarihi)/msGun);
