@@ -76,7 +76,10 @@ canvas{width:100%!important}
 <body>
 
 <div id="pg" class="pg on">
-  <div class="ptitle">Gunluk Plan</div>
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div class="ptitle">Gunluk Plan</div>
+    <button onclick="gosterHaftaOzeti(cWk)" style="background:var(--card2);border:none;color:var(--sub);border-radius:10px;padding:6px 12px;font-size:12px;cursor:pointer">📊 Özet</button>
+  </div>
   <p class="psub" id="tdlbl"></p>
   <div class="install-banner" id="installBanner" style="display:none">
     <div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:6px">Ana Ekrana Ekle</div>
@@ -88,7 +91,40 @@ canvas{width:100%!important}
     <button class="wnb" onclick="wkCh(1)">&#8250;</button>
   </div>
   <div class="dscr" id="dscr"></div>
+
+  <!-- Su Takibi -->
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="slbl" style="margin-bottom:0">💧 Su Takibi</div>
+      <span style="font-size:11px;color:var(--sub)">Hedef: 14 bardak (3.5L)</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <button onclick="suDegistir(-1)" style="width:40px;height:40px;border-radius:50%;background:var(--card2);border:none;color:var(--text);font-size:22px;cursor:pointer;flex-shrink:0">−</button>
+      <div style="flex:1;text-align:center">
+        <div id="su-sayi" style="font-size:40px;font-weight:700;color:var(--blue);line-height:1">0</div>
+        <div style="font-size:11px;color:var(--sub);margin-top:2px">bardak × 250ml</div>
+      </div>
+      <button onclick="suDegistir(1)" style="width:40px;height:40px;border-radius:50%;background:var(--blue);border:none;color:#000;font-size:22px;cursor:pointer;flex-shrink:0;font-weight:700">+</button>
+    </div>
+    <div style="background:var(--card2);border-radius:20px;height:8px;overflow:hidden;margin-bottom:6px">
+      <div id="su-bar" style="height:8px;border-radius:20px;background:linear-gradient(90deg,var(--blue),var(--green));width:0%;transition:width 0.3s"></div>
+    </div>
+    <div id="su-durum" style="font-size:12px;color:var(--sub);text-align:center"></div>
+  </div>
+
   <div class="card" id="ddet"></div>
+</div>
+
+<!-- Haftalık Özet Modal -->
+<div id="hafta-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;overflow-y:auto;padding:20px">
+  <div style="background:#1a1a1a;border-radius:20px;padding:20px;max-width:420px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:20px;font-weight:700" id="hafta-modal-baslik">Hafta Özeti</div>
+      <button style="background:var(--card2);border:none;color:var(--text);border-radius:10px;padding:6px 14px;cursor:pointer;font-size:14px" onclick="kapatHaftaModal()">✕</button>
+    </div>
+    <div id="hafta-modal-icerik"></div>
+    <button onclick="kapatHaftaModal()" style="width:100%;margin-top:16px;background:var(--blue);color:#000;border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:700;cursor:pointer">Yeni Haftaya Hazırım 💪</button>
+  </div>
 </div>
 
 <div id="pa" class="pg">
@@ -573,6 +609,142 @@ function init(){
     document.getElementById('installBanner').style.display='block';
   }
   checkBackupStatus();
+  renderSu();
+  var simdi=new Date();
+  if(simdi.getDay()===0 && simdi.getHours()>=18){
+    var ozetKey='hafta_ozet_gosterildi_'+cWk;
+    if(!lg(ozetKey,false)){
+      setTimeout(function(){gosterHaftaOzeti(cWk);},1200);
+    }
+  }
+}
+
+// ---- SU TAKİBİ ----
+function getSuKey(){
+  var d=new Date();
+  return 'su_'+d.getFullYear()+'_'+(d.getMonth()+1)+'_'+d.getDate();
+}
+
+function suDegistir(delta){
+  var key=getSuKey();
+  var mevcut=lg(key,0);
+  ls(key,Math.max(0,Math.min(20,mevcut+delta)));
+  renderSu();
+}
+
+function renderSu(){
+  var miktar=lg(getSuKey(),0);
+  var hedef=14;
+  var pct=Math.min(100,Math.round((miktar/hedef)*100));
+  var sayiEl=document.getElementById('su-sayi');
+  var barEl=document.getElementById('su-bar');
+  var durumEl=document.getElementById('su-durum');
+  if(!sayiEl) return;
+  sayiEl.textContent=miktar;
+  sayiEl.style.color=miktar>=hedef?'var(--green)':miktar>=10?'var(--orange)':'var(--blue)';
+  barEl.style.width=pct+'%';
+  var ml=miktar*250;
+  var txt=miktar===0?'Henüz su içmedin — hadi başla!':
+    miktar<7?(ml+'ml içildi · '+(hedef-miktar)+' bardak kaldı'):
+    miktar<hedef?(ml+'ml içildi · Hedefe yaklaşıyorsun 👍'):
+    '🎉 Hedef tamamlandı! '+ml+'ml';
+  durumEl.textContent=txt;
+  durumEl.style.color=miktar>=hedef?'var(--green)':'var(--sub)';
+}
+
+// ---- HAFTALIK ÖZET ----
+function gosterHaftaOzeti(wk){
+  var modal=document.getElementById('hafta-modal');
+  var icerik=document.getElementById('hafta-modal-icerik');
+  var baslik=document.getElementById('hafta-modal-baslik');
+  if(!modal||!icerik) return;
+  baslik.textContent=wk+'. Hafta Özeti';
+
+  // Antrenman uyumu
+  var woGunler=['sal','per','cmt','paz'];
+  var woYapilan=0;
+  woGunler.forEach(function(k){
+    if(Object.keys(lg('wo_'+k+'_w'+wk,{})).length>0) woYapilan++;
+  });
+
+  // Öğün uyumu
+  var toplamOgun=0,yenilenOgun=0;
+  for(var gun=0;gun<7;gun++){
+    var mlog=lg('meal_'+wk+'_'+gun,{});
+    toplamOgun+=ML[gun].filter(function(m){return m.n;}).length;
+    Object.keys(mlog).forEach(function(k){if(mlog[k]==='yedim') yenilenOgun++;});
+  }
+  var ogunPct=toplamOgun>0?Math.round((yenilenOgun/toplamOgun)*100):0;
+
+  // Kilo
+  var kiloLog=lg('kl',[{w:1,k:88}]);
+  var buHafta=null,gecenHafta=null;
+  kiloLog.forEach(function(x){
+    if(x.w===wk) buHafta=x.k;
+    if(x.w===wk-1) gecenHafta=x.k;
+  });
+  var kiloDegisim=buHafta!==null&&gecenHafta!==null?(gecenHafta-buHafta).toFixed(1):null;
+
+  // En iyi lift artışı
+  var enIyiLift=null,enIyiArtis=0;
+  LIFTS.forEach(function(lift){
+    var best=getBestSet(lg('wo_'+lift.wo+'_w'+wk,{}),lift.mi);
+    var prev=getBestSet(lg('wo_'+lift.wo+'_w'+(wk-1),{}),lift.mi);
+    if(best&&prev&&(best.kg-prev.kg)>enIyiArtis){
+      enIyiArtis=best.kg-prev.kg;
+      enIyiLift={n:lift.n,artis:best.kg-prev.kg,kg:best.kg};
+    }
+  });
+
+  var h='';
+  var woRenk=woYapilan>=4?'var(--green)':woYapilan>=3?'var(--orange)':'var(--red)';
+  h+='<div style="background:var(--card2);border-radius:14px;padding:14px;margin-bottom:10px">';
+  h+='<div style="font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;margin-bottom:8px">Antrenman</div>';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center">';
+  h+='<span style="font-size:32px;font-weight:700;color:'+woRenk+'">'+woYapilan+'/4</span>';
+  h+='<span style="font-size:13px;color:var(--sub)">seans tamamlandı</span></div>';
+  h+='<div style="font-size:12px;margin-top:4px;color:'+woRenk+'">'+(woYapilan===4?'Mükemmel hafta! 🔥':woYapilan===3?'İyi — 1 antrenman atlandı':(4-woYapilan)+' antrenman atlandı')+'</div></div>';
+
+  var ogunRenk=ogunPct>=80?'var(--green)':ogunPct>=60?'var(--orange)':'var(--red)';
+  h+='<div style="background:var(--card2);border-radius:14px;padding:14px;margin-bottom:10px">';
+  h+='<div style="font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;margin-bottom:8px">Beslenme Uyumu</div>';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+  h+='<span style="font-size:32px;font-weight:700;color:'+ogunRenk+'">%'+ogunPct+'</span>';
+  h+='<span style="font-size:13px;color:var(--sub)">'+yenilenOgun+'/'+toplamOgun+' öğün</span></div>';
+  h+='<div style="background:#333;border-radius:20px;height:6px;overflow:hidden"><div style="height:6px;border-radius:20px;background:'+ogunRenk+';width:'+ogunPct+'%"></div></div></div>';
+
+  h+='<div style="background:var(--card2);border-radius:14px;padding:14px;margin-bottom:10px">';
+  h+='<div style="font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;margin-bottom:8px">Kilo</div>';
+  if(buHafta!==null){
+    h+='<div style="display:flex;justify-content:space-between;align-items:center">';
+    h+='<span style="font-size:28px;font-weight:700;color:var(--blue)">'+buHafta+' kg</span>';
+    if(kiloDegisim!==null){
+      var kd=parseFloat(kiloDegisim);
+      h+='<span style="font-size:20px;font-weight:700;color:'+(kd>0?'var(--green)':'var(--red)')+'">'+(kd>0?'−':'+')+Math.abs(kiloDegisim)+' kg</span>';
+    }
+    h+='</div><div style="font-size:12px;color:var(--sub);margin-top:4px">Hedefe kalan: '+(buHafta-75).toFixed(1)+' kg</div>';
+  } else {
+    h+='<div style="color:var(--sub);font-size:13px">Bu hafta kilo girişi yok</div>';
+  }
+  h+='</div>';
+
+  if(enIyiLift){
+    h+='<div style="background:var(--card2);border-radius:14px;padding:14px;margin-bottom:10px">';
+    h+='<div style="font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;margin-bottom:6px">Haftanın En İyi Lifti</div>';
+    h+='<div style="font-size:15px;font-weight:700;color:var(--green)">↑ '+enIyiLift.n+'</div>';
+    h+='<div style="font-size:13px;color:var(--sub);margin-top:4px">+'+enIyiLift.artis+' kg artış → '+enIyiLift.kg+' kg</div></div>';
+  }
+
+  var mesajlar=['Her tekrar seni hedefe bir adım daha yaklaştırıyor.','Tutarlılık yeteneği yener. Devam et.','Vücut değişimi sabır ister. Veriler doğru yönde.','Bu hafta attığın adımlar gelecek haftanın temeli.','75 kg hedefi somutlaşıyor. Bırakma.'];
+  h+='<div style="border-left:3px solid var(--blue);padding:10px 14px;font-size:13px;color:var(--sub);font-style:italic">'+mesajlar[wk%mesajlar.length]+'</div>';
+
+  icerik.innerHTML=h;
+  modal.style.display='block';
+  ls('hafta_ozet_gosterildi_'+wk,true);
+}
+
+function kapatHaftaModal(){
+  document.getElementById('hafta-modal').style.display='none';
 }
 
 function sp(id,el){
