@@ -557,7 +557,7 @@ sal:{lbl:'Sali - Itis 1',nt:'Aksam 20:00',mv:[
   {n:'Lateral Raise',s:3,r:'8-12',rpe:'Tukeinis',lv:'m'},
   {n:'Triceps Pushdown',s:2,r:'6-9',rpe:'RIR 1-Tuk.',lv:'h'},
   {n:'Triceps Dips',s:2,r:'8-12',rpe:'Tukeinis',lv:'m'},
-  {n:'Incline Yuruyus (bant)',s:1,r:'20 dk',rpe:'%5 egim',lv:'m'}
+  {n:'Incline Yuruyus',s:1,r:'25 dk',rpe:'5.0 tempo / 15 incline',lv:'m',cardio:true}
 ]},
 per:{lbl:'Persembe - Cekis 1',nt:'Aksam 20:00',mv:[
   {n:'Lat Pulldown',s:2,r:'6-9',rpe:'RIR 1-Tuk.',lv:'h'},
@@ -566,7 +566,7 @@ per:{lbl:'Persembe - Cekis 1',nt:'Aksam 20:00',mv:[
   {n:'Dumbbell Curl',s:2,r:'8-12',rpe:'Tukeinis',lv:'m'},
   {n:'Cable Curl',s:2,r:'8-12',rpe:'Tukeinis',lv:'m'},
   {n:'Hammer Curl',s:2,r:'8-12',rpe:'Tukeinis',lv:'m'},
-  {n:'Incline Yuruyus (bant)',s:1,r:'20 dk',rpe:'%5 egim',lv:'m'}
+  {n:'Incline Yuruyus',s:1,r:'25 dk',rpe:'5.0 tempo / 15 incline',lv:'m',cardio:true}
 ]},
 cmt:{lbl:'Cumartesi - Itis 2',nt:'Sabah 10:00',mv:[
   {n:'Shoulder Press Machine',s:2,r:'6-9',rpe:'RIR 1-Tuk.',lv:'h'},
@@ -654,7 +654,7 @@ var FORM_NOTES={
   'Leg Press':'Ayaklar platformün biraz üstünde. Kalça koltuktan kalkmasın. Negatifi 4 saniyede kontrollü indir. Dizleri tam kilitme, hafif bükülü bırak.',
   'Leg Extension':'Diz makinenin dönme ekseniyle hizalı. Tepe noktada 1-2 saniye bekle, quadricepsi tam sıkıştır. Ağırlığı serbest bırakma, kontrollü indir.',
   'Romanian Deadlift (DB)':'Sırt düz, dizler hafif bükülü. Dumbbellları bacağa yakın tut. Kalçayı geriye iterek in, hamstringlerin gerildiğini hisset. Belde değil arka bacakta hissetmelisin.',
-  'Incline Yuruyus (bant)':'Ellerle tutunma — serbest yürü. Gövde dik, karın kasılı. Her adımda topuktan bas. Pelvik taban otomatik aktive olur, kalça kasları çalışır.'
+  'Incline Yuruyus':'15 incline, 5.0 tempo, 25 dakika. Elleri tutma — serbest yürü. Gövde dik, karın kasılı. Her adımda topuktan bas. Kalça ve arka bacak aktif kalır.'
 };
 
 function toggleNote(mi){
@@ -1691,8 +1691,17 @@ function renderWD(){
     var formNote=FORM_NOTES[m.n]||'';
     var noteBtn=formNote?'<button onclick="toggleNote('+mi+')" style="background:none;border:none;color:var(--sub);font-size:11px;cursor:pointer;padding:0;margin-left:6px">📋 Form</button>':'';
     var noteDiv=formNote?'<div id="note_'+mi+'" style="display:none;font-size:12px;color:var(--sub);background:var(--card2);border-radius:8px;padding:10px;margin-top:8px;line-height:1.6">'+formNote+'</div>':'';
-    h+='<div class="csm"><div class="mv2"><div><div class="mvn">'+m.n+noteBtn+'</div><div class="mvm">'+sc+' set x '+m.r+'</div></div><span class="rpe '+(m.lv==='h'?'rh':'rm')+'">'+m.rpe+'</span></div>'+noteDiv;
+    h+='<div class="csm"><div class="mv2"><div><div class="mvn">'+m.n+noteBtn+'</div><div class="mvm">'+(m.cardio?m.r:sc+' set x '+m.r)+'</div></div><span class="rpe '+(m.lv==='h'?'rh':'rm')+'">'+m.rpe+'</span></div>'+noteDiv;
     h+='<div class="sl">';
+    if(m.cardio){
+      // Kardio hareketi — sadece tamamlandı butonu
+      var kardioVal=ss[mi+'_0']||'';
+      var kardioTamam=kardioVal==='tamam';
+      h+='<div class="sr">';
+      h+='<button onclick="kardioToggle('+mi+')" style="border:none;border-radius:10px;font-size:13px;font-weight:700;padding:10px 20px;cursor:pointer;width:100%;background:'+(kardioTamam?'#14321f;color:#4ade80;border:1px solid #4ade80':'var(--card2)+\';color:var(--sub)\'')+'">';
+      h+=kardioTamam?'✓ Tamamlandı — 25 dk 5.0 / 15 incline':'Tamamlandı olarak işaretle';
+      h+='</button></div>';
+    } else {
     var prevSS=lg('wo_'+cWO+'_w'+(cWk-1),{});
     for(var si=0;si<sc;si++){
       var kk=mi+'_'+si;
@@ -1714,10 +1723,19 @@ function renderWD(){
       }
       h+='<div id="prog_'+mi+'_'+si+'" style="font-size:11px;padding:4px 0 2px 44px;line-height:1.6;'+(infoContent?'display:block':'display:none')+'">'+infoContent+'</div>';
     }
+    } // end if cardio
     h+='</div></div>';
   });
   document.getElementById('wdet').innerHTML=h;
   updateWoProgress();
+}
+
+function kardioToggle(mi){
+  var k='wo_'+cWO+'_w'+cWk;
+  var s=lg(k,{});
+  s[mi+'_0']=s[mi+'_0']==='tamam'?'':' tamam';
+  ls(k,s);
+  renderWD();
 }
 
 function parseSet(val){
