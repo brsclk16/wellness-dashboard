@@ -293,6 +293,64 @@ var DF=['Pazar','Pazartesi','Sali','Carsamba','Persembe','Cuma','Cumartesi'];
 var DT={0:'idman',1:'off',2:'idman',3:'off',4:'idman',5:'off',6:'idman'};
 var DL={0:'Cekis+Bacak',1:'Dinlenme',2:'Itis 1',3:'Dinlenme',4:'Cekis 1',5:'Dinlenme',6:'Itis 2'};
 
+// Fabrika Menüsü — Haziran 2026 (Pazartesi=1, Salı=2, Çarşamba=3, Perşembe=4, Cuma=5)
+var FABRIKA_MENU={
+  '2026-06-01':{c:'Mercimek Corba',a:'Izmir Kofte',g:'Makarna',x:'Browni',xw:true},
+  '2026-06-02':{c:'Tavuk Suyu Corba',a:'Yumurtali Ispanak',g:'Pirinc Pilavi',x:'Salata'},
+  '2026-06-03':{c:'N. Yogurt Corbasi',a:'Tavuklu Patates',g:'Bulgur Pilavi',x:'Ekmek'},
+  '2026-06-04':{c:'Ezogelin Corba',a:'Canak Kofte',g:'Pirinc Pilavi',x:'Meyve'},
+  '2026-06-05':{c:'Yayla Corbasi',a:'Ciftlik Kebabi',g:'Makarna',x:'Salata'},
+  '2026-06-08':{c:'Ezogelin Corba',a:'Pilic Meksika',g:'Bulgur Pilavi',x:'Acili Ezme'},
+  '2026-06-09':{c:'Tavuk Suyu Corba',a:'Taze Fasulye',g:'Pirinc Pilavi',x:'Kemalpasa'},
+  '2026-06-10':{c:'N. Yogurt Corbasi',a:'Misket Kofte',g:'Salcali Makarna',x:'Coban Salatasi'},
+  '2026-06-11':{c:'Mercimek Corba',a:'Biber Dolma',g:'Su Boregi',x:'Meyve'},
+  '2026-06-12':{c:'Domates Corbasi',a:'Orman Kebabi',g:'Pirinc Pilavi',x:'Tralice'},
+  '2026-06-15':{c:'Tavuk Suyu Corba',a:'Nohut',g:'Pirinc Pilavi',x:'Kemalpasa'},
+  '2026-06-16':{c:'Yogurt Corbasi',a:'Arnavut Tavuk',g:'Soslu Makarna',x:'Rus Salatasi'},
+  '2026-06-17':{c:'Ezogelin Corba',a:'Patlican Musakka',g:'Pirinc Pilavi',x:'Meyve'},
+  '2026-06-18':{c:'Domates Corbasi',a:'Elbasan Tavuk',g:'Makarna',x:'Rulo Pasta',xw:true},
+  '2026-06-19':{c:'Mercimek Corba',a:'Inegol Kofte',g:'Pirinc Pilavi',x:'Salata'},
+  '2026-06-22':{c:'Mercimek Corba',a:'Tavuk Izgara',g:'Pirinc Pilavi',x:'Acili Ezme'},
+  '2026-06-23':{c:'Tavuk Suyu Corba',a:'Kuru Fasulye',g:'Pirinc Pilavi',x:'Peynir Tatlisi',xw:true},
+  '2026-06-24':{c:'Ezogelin Corba',a:'Karisik Kizartma',g:'Soslu Makarna',x:'Meyve'},
+  '2026-06-25':{c:'Sebze Corbasi',a:'Patates Oturtma',g:'Borek',x:'Red Velvet',xw:true},
+  '2026-06-26':{c:'Yogurt Corbasi',a:'Dalyan Kofte',g:'P.Makarna',x:'Salata'},
+  '2026-06-29':{c:'Ezogelin Corba',a:'Eksili Kofte',g:'Manti',x:'Tatli',xw:true},
+  '2026-06-30':{c:'Tavuk Suyu Corba',a:'Taze Fasulye',g:'Su Boregi',x:'Coban Salatasi'}
+};
+
+function getTodayMenuKey(){
+  var d=new Date();
+  var y=d.getFullYear();
+  var m=String(d.getMonth()+1).padStart(2,'0');
+  var g=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+g;
+}
+
+function getMenuForDay(dayOfWeek, weekNum){
+  // Hafta numarasından ve gün indexinden tarihi hesapla
+  // Program başlangıcı: 10 Haziran 2026 (Çarşamba, index 3)
+  // Ama ML'de 0=Paz,1=Pzt,...,5=Cum,6=Cmt
+  // Fabrika günleri: 1(Pzt),2(Sal),3(Car),4(Per),5(Cum)
+  var programStart=new Date('2026-06-10');
+  // weekNum 1 = 10 Haziran haftası
+  var weekStart=new Date(programStart);
+  weekStart.setDate(programStart.getDate() - programStart.getDay() + 1); // Pazartesiye al
+  weekStart.setDate(weekStart.getDate() + (weekNum-1)*7);
+
+  // dayOfWeek: 0=Paz,1=Pzt,2=Sal,3=Car,4=Per,5=Cum,6=Cmt
+  var jsDay=[0,1,2,3,4,5,6]; // JS günleri
+  var targetDate=new Date(weekStart);
+  // weekStart Pazartesi, JS'de Pazartesi=1
+  // bizim 0=Paz, 1=Pzt... -> offset hesabı
+  var offsets={0:6,1:0,2:1,3:2,4:3,5:4,6:5}; // bizim index -> Pazartesiden offset
+  targetDate.setDate(weekStart.getDate()+offsets[dayOfWeek]);
+  var y=targetDate.getFullYear();
+  var m=String(targetDate.getMonth()+1).padStart(2,'0');
+  var g=String(targetDate.getDate()).padStart(2,'0');
+  return FABRIKA_MENU[y+'-'+m+'-'+g]||null;
+}
+
 var ML={
 0:[
   {t:'09:15',n:'Idman oncesi',d:'1 buyuk muz (~120g) + 1 fincan sade kahve',b:'bg',bt:'Enerji'},
@@ -555,6 +613,9 @@ function renderDD(){
   var mealKey='meal_'+cWk+'_'+cDay;
   var mealLog=lg(mealKey,{});
 
+  // Fabrika menüsünü al
+  var fabrika=getMenuForDay(cDay,cWk);
+
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
   h+='<span style="font-size:16px;font-weight:700">'+DF[cDay]+'</span>';
   h+='<span style="font-size:12px;padding:4px 12px;border-radius:20px;background:'+(isI?'#14321f;color:#4ade80':'#1a1a1a;color:#888')+';font-weight:600">'+DL[cDay]+'</span></div>';
@@ -573,12 +634,32 @@ function renderDD(){
       h+='<div style="padding:3px 0 3px 60px;font-size:12px;color:#888">'+m.d+(m.b?'&nbsp;<span class="bdg '+m.b+'">'+m.bt+'</span>':'')+'</div>';
       return;
     }
+
+    // Fabrika öğle satırını gerçek menüyle değiştir
+    var displayName=m.n;
+    var displayDesc=m.d;
+    var extraBadge='';
+    if(m.n==='Fabrika ogle' && fabrika){
+      displayName='Fabrika Ogle';
+      var diyetOneri=isI?'Karbonhidrat al — aksam idman var':'Karbonhidrat minimize et';
+      displayDesc=
+        '<span style="color:var(--orange);font-weight:600">🍲 '+fabrika.c+'</span> + '+
+        '<span style="font-weight:600">'+fabrika.a+'</span> + '+
+        fabrika.g;
+      if(fabrika.x){
+        var xRenk=fabrika.xw?'var(--red)':'var(--sub)';
+        var xIkon=fabrika.xw?'⚠ ':'';
+        displayDesc+=' <span style="color:'+xRenk+';font-size:11px">· '+xIkon+fabrika.x+(fabrika.xw?' — Atla':' ✓')+'</span>';
+      }
+      displayDesc+='<div style="font-size:11px;color:var(--blue);margin-top:3px">💡 '+diyetOneri+'</div>';
+    }
+
     var st=mealLog[mi]||'';
     var btnBase='border:none;border-radius:8px;font-size:11px;font-weight:600;padding:4px 8px;cursor:pointer;';
     h+='<div class="meal" style="flex-direction:column;gap:6px">';
     h+='<div style="display:flex;gap:12px;align-items:flex-start">';
     h+='<div class="mt">'+m.t+'</div>';
-    h+='<div style="flex:1"><div class="mn">'+m.n+'</div><div class="md">'+m.d+'</div>'+(m.b?'<span class="bdg '+m.b+'">'+m.bt+'</span>':'')+'</div></div>';
+    h+='<div style="flex:1"><div class="mn">'+displayName+'</div><div class="md">'+displayDesc+'</div>'+(m.b?'<span class="bdg '+m.b+'">'+m.bt+'</span>':'')+'</div></div>';
     h+='<div style="display:flex;gap:6px;padding-left:60px">';
     h+='<button style="'+btnBase+'background:'+(st==='yedim'?'#14321f;color:#4ade80;border:1px solid #4ade80':'#1a1a1a;color:#888')+'" onclick="setMeal('+mi+',\'yedim\')">✓ Yedim</button>';
     h+='<button style="'+btnBase+'background:'+(st==='atladim'?'#3a1a1a;color:#f87171;border:1px solid #f87171':'#1a1a1a;color:#888')+'" onclick="setMeal('+mi+',\'atladim\')">✗ Atladım</button>';
@@ -588,8 +669,6 @@ function renderDD(){
   });
   document.getElementById('ddet').innerHTML=h;
 }
-
-function setMeal(mi,st){
   var mealKey='meal_'+cWk+'_'+cDay;
   var mealLog=lg(mealKey,{});
   if(mealLog[mi]===st) delete mealLog[mi]; else mealLog[mi]=st;
