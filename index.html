@@ -351,6 +351,49 @@ canvas{width:100%!important}
   </div>
 </div>
 
+<!-- Fotoğraf Analizi Modal -->
+<div id="foto-analiz-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:250;overflow-y:auto;padding:20px">
+  <div style="background:#1a1a1a;border-radius:20px;padding:20px;max-width:420px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:18px;font-weight:700">📸 Yemek Analizi</div>
+      <button onclick="kapatFotoModal()" style="background:var(--card2);border:none;color:var(--text);border-radius:10px;padding:6px 14px;cursor:pointer">✕</button>
+    </div>
+    <div id="foto-modal-ogun-lbl" style="font-size:13px;color:var(--sub);margin-bottom:12px"></div>
+
+    <!-- Fotoğraf yükleme alanı -->
+    <div id="foto-upload-alan" style="border:2px dashed var(--border);border-radius:14px;padding:24px;text-align:center;cursor:pointer;margin-bottom:12px" onclick="document.getElementById('foto-file-input').click()">
+      <div style="font-size:32px;margin-bottom:8px">📷</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px">Fotoğraf Seç</div>
+      <div style="font-size:12px;color:var(--sub)">Tabağının fotoğrafını çek veya galeriden seç</div>
+    </div>
+    <input type="file" id="foto-file-input" accept="image/*" capture="environment" style="display:none" onchange="fotoyuAnalizeEt(this)">
+
+    <!-- Önizleme -->
+    <div id="foto-onizleme" style="display:none;margin-bottom:12px">
+      <img id="foto-onizleme-img" style="width:100%;border-radius:12px;max-height:200px;object-fit:cover">
+    </div>
+
+    <!-- Yükleniyor -->
+    <div id="foto-yukleniyor" style="display:none;text-align:center;padding:20px">
+      <div style="font-size:24px;margin-bottom:8px">🔍</div>
+      <div style="font-size:14px;color:var(--sub)">Analiz ediliyor...</div>
+    </div>
+
+    <!-- Sonuç -->
+    <div id="foto-sonuc" style="display:none">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--green)">✓ Analiz Tamamlandı</div>
+      <div id="foto-yemek-adi" style="font-size:15px;font-weight:700;margin-bottom:8px"></div>
+      <div id="foto-aciklama" style="font-size:12px;color:var(--sub);margin-bottom:12px;line-height:1.5"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:12px" id="foto-makro-grid"></div>
+      <div id="foto-uyari" style="font-size:11px;color:var(--orange);background:#2a1e0f;border-radius:8px;padding:8px;margin-bottom:12px;display:none"></div>
+      <button onclick="analiziKaydet()" style="width:100%;background:var(--green);color:#000;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">💾 Bu Öğüne Kaydet</button>
+    </div>
+
+    <!-- Hata -->
+    <div id="foto-hata" style="display:none;color:var(--red);font-size:13px;text-align:center;padding:12px"></div>
+  </div>
+</div>
+
 <nav class="nav">
   <button class="nb on" onclick="sp('g',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Gunluk
@@ -1258,10 +1301,19 @@ function renderDD(){
     if(!m.n) return;
     var carpan=mealLog[mi2]==='yedim'?1:mealLog[mi2]==='degistirdim'?0.85:0;
     if(carpan>0){
-      yenilenKcal+=Math.round((m.kcal||0)*carpan);
-      yenilenP+=Math.round((m.p||0)*carpan);
-      yenilenK+=Math.round((m.k||0)*carpan);
-      yenilenY+=Math.round((m.y||0)*carpan);
+      // Gerçek fotoğraf verisi varsa onu kullan
+      var gercek=lg('gercek_'+cWk+'_'+cDay+'_'+mi2,null);
+      if(gercek){
+        yenilenKcal+=Math.round((gercek.kcal||0)*carpan);
+        yenilenP+=Math.round((gercek.p||0)*carpan);
+        yenilenK+=Math.round((gercek.k||0)*carpan);
+        yenilenY+=Math.round((gercek.y||0)*carpan);
+      } else {
+        yenilenKcal+=Math.round((m.kcal||0)*carpan);
+        yenilenP+=Math.round((m.p||0)*carpan);
+        yenilenK+=Math.round((m.k||0)*carpan);
+        yenilenY+=Math.round((m.y||0)*carpan);
+      }
     }
     mi2++;
   });
@@ -1318,12 +1370,26 @@ function renderDD(){
     }
 
     var st=mealLog[mi]||'';
+    var gercekKey='gercek_'+cWk+'_'+cDay+'_'+mi;
+    var gercek=lg(gercekKey,null);
     var btnBase='border:none;border-radius:8px;font-size:11px;font-weight:600;padding:4px 8px;cursor:pointer;';
+
     h+='<div class="meal" style="flex-direction:column;gap:6px">';
     h+='<div style="display:flex;gap:12px;align-items:flex-start">';
     h+='<div class="mt">'+m.t+'</div>';
     h+='<div style="flex:1"><div class="mn">'+displayName+'</div><div class="md">'+displayDesc+'</div>'+(m.b?'<span class="bdg '+m.b+'">'+m.bt+'</span>':'');
-    if(m.kcal){
+
+    // Makro gösterimi — gerçek veri varsa onu, yoksa plan değerlerini göster
+    if(gercek){
+      h+='<div style="display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;align-items:center">';
+      h+='<span style="font-size:10px;background:#14321f;color:#4ade80;padding:2px 7px;border-radius:6px;font-weight:700">📸 Gerçek</span>';
+      h+='<span style="font-size:10px;background:#1a1a2e;color:#60a5fa;padding:2px 7px;border-radius:6px">'+gercek.kcal+' kcal</span>';
+      if(gercek.p) h+='<span style="font-size:10px;background:#1a2f1a;color:#4ade80;padding:2px 7px;border-radius:6px">P '+gercek.p+'g</span>';
+      if(gercek.k) h+='<span style="font-size:10px;background:#2a1e0f;color:#fb923c;padding:2px 7px;border-radius:6px">K '+gercek.k+'g</span>';
+      if(gercek.y) h+='<span style="font-size:10px;background:#2a1a2a;color:#c084fc;padding:2px 7px;border-radius:6px">Y '+gercek.y+'g</span>';
+      h+='<button onclick="silGercek('+mi+')" style="font-size:10px;background:transparent;border:none;color:var(--sub);cursor:pointer;padding:0">✕</button>';
+      h+='</div>';
+    } else if(m.kcal){
       h+='<div style="display:flex;gap:8px;margin-top:5px;flex-wrap:wrap">';
       h+='<span style="font-size:10px;background:#1a1a2e;color:#60a5fa;padding:2px 7px;border-radius:6px">'+m.kcal+' kcal</span>';
       if(m.p) h+='<span style="font-size:10px;background:#1a2f1a;color:#4ade80;padding:2px 7px;border-radius:6px">P '+m.p+'g</span>';
@@ -1332,10 +1398,11 @@ function renderDD(){
       h+='</div>';
     }
     h+='</div></div>';
-    h+='<div style="display:flex;gap:6px;padding-left:60px">';
+    h+='<div style="display:flex;gap:6px;padding-left:60px;flex-wrap:wrap">';
     h+='<button style="'+btnBase+'background:'+(st==='yedim'?'#14321f;color:#4ade80;border:1px solid #4ade80':'#1a1a1a;color:#888')+'" onclick="setMeal('+mi+',\'yedim\')">✓ Yedim</button>';
     h+='<button style="'+btnBase+'background:'+(st==='atladim'?'#3a1a1a;color:#f87171;border:1px solid #f87171':'#1a1a1a;color:#888')+'" onclick="setMeal('+mi+',\'atladim\')">✗ Atladım</button>';
     h+='<button style="'+btnBase+'background:'+(st==='degistirdim'?'#2a1e0f;color:#fb923c;border:1px solid #fb923c':'#1a1a1a;color:#888')+'" onclick="setMeal('+mi+',\'degistirdim\')">~ Değiştirdim</button>';
+    if(m.n) h+='<button style="'+btnBase+'background:#1a1a2e;color:#60a5fa" onclick="acFotoModal('+mi+',\''+displayName+'\')">📸</button>';
     h+='</div></div>';
     mi++;
   });
@@ -1347,6 +1414,126 @@ function setMeal(mi,st){
   var mealLog=lg(mealKey,{});
   if(mealLog[mi]===st) delete mealLog[mi]; else mealLog[mi]=st;
   ls(mealKey,mealLog);
+  renderDD();
+}
+
+function silGercek(mi){
+  localStorage.removeItem('gercek_'+cWk+'_'+cDay+'_'+mi);
+  renderDD();
+}
+
+// ---- FOTOĞRAF ANALİZİ ----
+var aktifOgunMi=null, aktifAnalizSonuc=null;
+
+function acFotoModal(mi, ogunAdi){
+  aktifOgunMi=mi;
+  aktifAnalizSonuc=null;
+  document.getElementById('foto-modal-ogun-lbl').textContent=ogunAdi+' — '+cWk+'. Hafta, '+DF[cDay];
+  document.getElementById('foto-upload-alan').style.display='block';
+  document.getElementById('foto-onizleme').style.display='none';
+  document.getElementById('foto-yukleniyor').style.display='none';
+  document.getElementById('foto-sonuc').style.display='none';
+  document.getElementById('foto-hata').style.display='none';
+  document.getElementById('foto-file-input').value='';
+  document.getElementById('foto-analiz-modal').style.display='block';
+}
+
+function kapatFotoModal(){
+  document.getElementById('foto-analiz-modal').style.display='none';
+  aktifOgunMi=null;
+  aktifAnalizSonuc=null;
+}
+
+function fotoyuAnalizeEt(input){
+  if(!input.files||!input.files[0]) return;
+  var file=input.files[0];
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var base64=e.target.result.split(',')[1];
+    var mimeType=file.type||'image/jpeg';
+
+    // Önizleme göster
+    document.getElementById('foto-onizleme-img').src=e.target.result;
+    document.getElementById('foto-onizleme').style.display='block';
+    document.getElementById('foto-upload-alan').style.display='none';
+    document.getElementById('foto-yukleniyor').style.display='block';
+    document.getElementById('foto-sonuc').style.display='none';
+    document.getElementById('foto-hata').style.display='none';
+
+    // Claude API'ye gönder
+    fetch('https://morello-ai-proxy.brsclk16.workers.dev',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:600,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image',source:{type:'base64',media_type:mimeType,data:base64}},
+            {type:'text',text:'Bu yemeğin fotoğrafına bak ve beslenme analizi yap. Türkçe tabak içeriğini tanı. SADECE JSON döndür, başka hiçbir şey yazma:\n{"yemek":"tabak içeriği kısa açıklama","kcal":sayı,"p":protein_gram,"k":karbonhidrat_gram,"y":yag_gram,"notlar":"kısa not"}'}
+          ]
+        }]
+      })
+    })
+    .then(function(r){return r.json();})
+    .then(function(data){
+      document.getElementById('foto-yukleniyor').style.display='none';
+      if(data.error){
+        document.getElementById('foto-hata').textContent='API hatası: '+data.error.message;
+        document.getElementById('foto-hata').style.display='block';
+        return;
+      }
+      var txt=data.content[0].text.trim();
+      // JSON temizle
+      txt=txt.replace(/```json|```/g,'').trim();
+      var sonuc=JSON.parse(txt);
+      aktifAnalizSonuc=sonuc;
+
+      document.getElementById('foto-yemek-adi').textContent=sonuc.yemek||'Yemek';
+      document.getElementById('foto-aciklama').textContent=sonuc.notlar||'';
+
+      var grid=document.getElementById('foto-makro-grid');
+      grid.innerHTML=
+        '<div style="text-align:center;background:#111;border-radius:8px;padding:8px"><div style="font-size:10px;color:var(--sub)">Kalori</div><div style="font-size:20px;font-weight:700;color:var(--blue)">'+sonuc.kcal+'</div><div style="font-size:10px;color:var(--sub)">kcal</div></div>'+
+        '<div style="text-align:center;background:#111;border-radius:8px;padding:8px"><div style="font-size:10px;color:var(--sub)">Protein</div><div style="font-size:20px;font-weight:700;color:var(--green)">'+sonuc.p+'g</div></div>'+
+        '<div style="text-align:center;background:#111;border-radius:8px;padding:8px"><div style="font-size:10px;color:var(--sub)">Karb</div><div style="font-size:20px;font-weight:700;color:var(--orange)">'+sonuc.k+'g</div></div>'+
+        '<div style="text-align:center;background:#111;border-radius:8px;padding:8px"><div style="font-size:10px;color:var(--sub)">Yağ</div><div style="font-size:20px;font-weight:700;color:var(--purple)">'+sonuc.y+'g</div></div>';
+
+      var uyariEl=document.getElementById('foto-uyari');
+      if(sonuc.notlar&&sonuc.notlar.length>0){
+        uyariEl.textContent='⚠ '+sonuc.notlar;
+        uyariEl.style.display='block';
+      } else {
+        uyariEl.style.display='none';
+      }
+      document.getElementById('foto-sonuc').style.display='block';
+    })
+    .catch(function(err){
+      document.getElementById('foto-yukleniyor').style.display='none';
+      document.getElementById('foto-hata').textContent='Bağlantı hatası. İnternet bağlantını kontrol et.';
+      document.getElementById('foto-hata').style.display='block';
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function analiziKaydet(){
+  if(!aktifAnalizSonuc||aktifOgunMi===null) return;
+  var key='gercek_'+cWk+'_'+cDay+'_'+aktifOgunMi;
+  ls(key,{
+    kcal:aktifAnalizSonuc.kcal,
+    p:aktifAnalizSonuc.p,
+    k:aktifAnalizSonuc.k,
+    y:aktifAnalizSonuc.y,
+    yemek:aktifAnalizSonuc.yemek
+  });
+  // Otomatik "Yedim" işaretle
+  var mealKey='meal_'+cWk+'_'+cDay;
+  var mealLog=lg(mealKey,{});
+  mealLog[aktifOgunMi]='yedim';
+  ls(mealKey,mealLog);
+  kapatFotoModal();
   renderDD();
 }
 
