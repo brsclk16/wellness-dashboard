@@ -110,6 +110,13 @@ canvas{width:100%!important}
     <button class="wnb" onclick="wkCh(1)">&#8250;</button>
   </div>
   <div class="wtbs" id="wtbs"></div>
+  <div id="wo-plan-card" class="card" style="margin-bottom:12px;display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="slbl" style="margin-bottom:0">Bu Hafta Hedefler</div>
+      <span style="font-size:11px;color:var(--sub)">Geçen haftadan hesaplandı</span>
+    </div>
+    <div id="wo-plan-list"></div>
+  </div>
   <div id="wdet"></div>
 </div>
 
@@ -489,6 +496,7 @@ function init(){
   renderDD();
   renderWT();
   renderWD();
+  renderWoPlan();
   updateWoProgress();
   renderSup();
   renderLiftBtns();
@@ -544,17 +552,49 @@ function renderDS(){
 function renderDD(){
   var meals=ML[cDay];
   var isI=DT[cDay]==='idman';
+  var mealKey='meal_'+cWk+'_'+cDay;
+  var mealLog=lg(mealKey,{});
+
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
   h+='<span style="font-size:16px;font-weight:700">'+DF[cDay]+'</span>';
   h+='<span style="font-size:12px;padding:4px 12px;border-radius:20px;background:'+(isI?'#14321f;color:#4ade80':'#1a1a1a;color:#888')+';font-weight:600">'+DL[cDay]+'</span></div>';
-  meals.forEach(function(m){
+
+  // Uyum özeti
+  var mealCount=meals.filter(function(m){return m.n;}).length;
+  var doneCount=Object.keys(mealLog).filter(function(k){return mealLog[k]==='yedim';}).length;
+  var uyumPct=mealCount>0?Math.round((doneCount/mealCount)*100):0;
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:8px 10px;background:var(--card2);border-radius:10px">';
+  h+='<div style="flex:1;background:#333;border-radius:20px;height:5px;overflow:hidden"><div style="height:5px;border-radius:20px;background:'+(uyumPct>=80?'var(--green)':'var(--orange)')+';width:'+uyumPct+'%"></div></div>';
+  h+='<span style="font-size:12px;font-weight:700;color:'+(uyumPct>=80?'var(--green)':'var(--orange)')+'">%'+uyumPct+' uyum</span></div>';
+
+  var mi=0;
+  meals.forEach(function(m,idx){
     if(!m.n){
       h+='<div style="padding:3px 0 3px 60px;font-size:12px;color:#888">'+m.d+(m.b?'&nbsp;<span class="bdg '+m.b+'">'+m.bt+'</span>':'')+'</div>';
       return;
     }
-    h+='<div class="meal"><div class="mt">'+m.t+'</div><div><div class="mn">'+m.n+'</div><div class="md">'+m.d+'</div>'+(m.b?'<span class="bdg '+m.b+'">'+m.bt+'</span>':'')+'</div></div>';
+    var st=mealLog[mi]||'';
+    var btnBase='border:none;border-radius:8px;font-size:11px;font-weight:600;padding:4px 8px;cursor:pointer;';
+    h+='<div class="meal" style="flex-direction:column;gap:6px">';
+    h+='<div style="display:flex;gap:12px;align-items:flex-start">';
+    h+='<div class="mt">'+m.t+'</div>';
+    h+='<div style="flex:1"><div class="mn">'+m.n+'</div><div class="md">'+m.d+'</div>'+(m.b?'<span class="bdg '+m.b+'">'+m.bt+'</span>':'')+'</div></div>';
+    h+='<div style="display:flex;gap:6px;padding-left:60px">';
+    h+='<button style="'+btnBase+'background:'+(st==='yedim'?'#14321f;color:#4ade80;border:1px solid #4ade80':'#1a1a1a;color:#888')+'" onclick="setMeal('+mi+',\'yedim\')">✓ Yedim</button>';
+    h+='<button style="'+btnBase+'background:'+(st==='atladim'?'#3a1a1a;color:#f87171;border:1px solid #f87171':'#1a1a1a;color:#888')+'" onclick="setMeal('+mi+',\'atladim\')">✗ Atladım</button>';
+    h+='<button style="'+btnBase+'background:'+(st==='degistirdim'?'#2a1e0f;color:#fb923c;border:1px solid #fb923c':'#1a1a1a;color:#888')+'" onclick="setMeal('+mi+',\'degistirdim\')">~ Değiştirdim</button>';
+    h+='</div></div>';
+    mi++;
   });
   document.getElementById('ddet').innerHTML=h;
+}
+
+function setMeal(mi,st){
+  var mealKey='meal_'+cWk+'_'+cDay;
+  var mealLog=lg(mealKey,{});
+  if(mealLog[mi]===st) delete mealLog[mi]; else mealLog[mi]=st;
+  ls(mealKey,mealLog);
+  renderDD();
 }
 
 function renderWT(){
@@ -565,9 +605,65 @@ function renderWT(){
     var b=document.createElement('button');
     b.className='wtb'+(k===cWO?' on':'');
     b.textContent=w.lbl;
-    b.onclick=function(){cWO=k;renderWT();renderWD();};
+    b.onclick=function(){cWO=k;renderWT();renderWD();renderWoPlan();};
     c.appendChild(b);
   });
+  renderWoPlan();
+}
+
+function renderWoPlan(){
+  var card=document.getElementById('wo-plan-card');
+  var list=document.getElementById('wo-plan-list');
+  if(!card||!list) return;
+  var wo=WOS[cWO];
+  var prevSS=lg('wo_'+cWO+'_w'+(cWk-1),{});
+  var hasPrev=Object.keys(prevSS).length>0;
+  if(!hasPrev){card.style.display='none';return;}
+
+  var h='';
+  var hasAny=false;
+  wo.mv.forEach(function(m,mi){
+    // En iyi geçen hafta seti bul
+    var best=null;
+    for(var si=0;si<m.s;si++){
+      var v=prevSS[mi+'_'+si]||'';
+      var p=parseSet(v);
+      if(p&&(!best||p.score>best.score)) best=p;
+    }
+    if(!best) return;
+    hasAny=true;
+
+    var calc=calcProgression(best.kg,best.rep);
+    var hedef,renk,ikon;
+
+    if(calc.warn){
+      // Rep 6 altındaysa aynı ağırlıkla daha fazla rep öner
+      hedef=best.kg+'×'+(best.rep+1)+' dene';
+      renk='var(--orange)';ikon='→';
+    } else {
+      // Double progression: rep range üstündeyse ağırlık artır, değilse rep artır
+      var rMax=parseInt((m.r||'12').split('-')[1]||m.r);
+      var rMin=parseInt((m.r||'6').split('-')[0]||m.r);
+      if(best.rep>=rMax){
+        hedef=(best.kg+2.5)+'×'+rMin+' başla';
+        renk='var(--green)';ikon='↑';
+      } else {
+        hedef=best.kg+'×'+(best.rep+1)+' hedefle';
+        renk='var(--blue)';ikon='→';
+      }
+    }
+
+    h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">';
+    h+='<span style="font-size:16px;color:'+renk+'">'+ikon+'</span>';
+    h+='<div style="flex:1"><div style="font-size:13px;font-weight:600">'+m.n+'</div>';
+    h+='<div style="font-size:11px;color:var(--sub)">Geçen: '+best.kg+'×'+best.rep+'</div></div>';
+    h+='<span style="font-size:12px;font-weight:700;color:'+renk+';background:var(--card2);padding:4px 10px;border-radius:8px">'+hedef+'</span>';
+    h+='</div>';
+  });
+
+  if(!hasAny){card.style.display='none';return;}
+  list.innerHTML=h;
+  card.style.display='block';
 }
 
 function renderWD(){
