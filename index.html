@@ -439,69 +439,69 @@ function getMenuForDay(dayOfWeek, weekNum){
 
 var ML={
 0:[
-  {t:'09:15',n:'Idman oncesi',d:'1 buyuk muz (~120g) + 1 fincan sade kahve',b:'bg',bt:'Enerji',kcal:120},
-  {t:'10:00',n:'Idman esnasi',d:'BCAA 1 olcek (5-8g) 1 litre suya karistir',b:'bb',bt:'BCAA',kcal:20},
-  {t:'11:30',n:'Dev kahvalti',d:'4 tam yumurta omlet + 3 yk lor peyniri (60g) + 5-6 zeytin + Whey 1 olcek + Ester-C 1 tablet',b:'bg',bt:'Protein',kcal:580},
-  {t:'16:00',n:'Ogle sonrasi',d:'150g airfryer tavuk (cig tarti) + 5 yk pisik basmati (~150g) + D3 1 kapsul',b:'bb',bt:'D3',kcal:490},
-  {t:'16:05',n:'',d:'Omega-3 2 kapsul (1560mg) - yagiz ogunle birlikte - emilim icin SART',b:'bb',bt:'Omega-3',kcal:0},
-  {t:'20:30',n:'Aksam yemegi',d:'200g airfryer tavuk + brokoli/kabak (~150g) + Kreatin 5g',b:'bb',bt:'Kreatin',kcal:320},
-  {t:'01:00',n:'Uyku oncesi',d:'ZMA 3 kapsul - ac karnina 45 dk once - KALSIYUMLU GIDA YOK',b:'bb',bt:'ZMA',kcal:0}
+  {t:'09:15',n:'Idman oncesi',d:'1 buyuk muz (~120g) + 1 fincan sade kahve',b:'bg',bt:'Enerji',kcal:120,p:1,k:30,y:0},
+  {t:'10:00',n:'Idman esnasi',d:'BCAA 1 olcek (5-8g) 1 litre suya karistir',b:'bb',bt:'BCAA',kcal:20,p:5,k:0,y:0},
+  {t:'11:30',n:'Dev kahvalti',d:'4 tam yumurta omlet + 3 yk lor peyniri (60g) + 5-6 zeytin + Whey 1 olcek + Ester-C 1 tablet',b:'bg',bt:'Protein',kcal:580,p:62,k:8,y:32},
+  {t:'16:00',n:'Ogle sonrasi',d:'150g airfryer tavuk (cig tarti) + 5 yk pisik basmati (~150g) + D3 1 kapsul',b:'bb',bt:'D3',kcal:490,p:38,k:55,y:8},
+  {t:'16:05',n:'',d:'Omega-3 2 kapsul (1560mg) - yagiz ogunle birlikte - emilim icin SART',b:'bb',bt:'Omega-3',kcal:0,p:0,k:0,y:0},
+  {t:'20:30',n:'Aksam yemegi',d:'200g airfryer tavuk + brokoli/kabak (~150g) + Kreatin 5g',b:'bb',bt:'Kreatin',kcal:320,p:46,k:8,y:10},
+  {t:'01:00',n:'Uyku oncesi',d:'ZMA 3 kapsul - ac karnina 45 dk once - KALSIYUMLU GIDA YOK',b:'bb',bt:'ZMA',kcal:0,p:0,k:0,y:0}
 ],
 1:[
-  {t:'08:30',n:'Sabah',d:'Sade filtre kahve + Ester-C 1 tablet',b:'bb',bt:'Ester-C',kcal:10},
-  {t:'13:00',n:'Fabrika ogle',d:'Ana yemek et/tavuk (150-180g) + corba 1 kase VEYA pilav 4-5 yk + salata - EKMEK YOK - TATLI YOK',b:'bx',bt:'Ucretsiz',kcal:550},
-  {t:'13:05',n:'',d:'D3 1 kapsul hemen ogle yemegiyle',b:'bb',bt:'D3',kcal:0},
-  {t:'13:06',n:'',d:'Omega-3 2 kapsul (1560mg) - yagiz ogunle birlikte',b:'bb',bt:'Omega-3',kcal:0},
-  {t:'18:30',n:'Is cikisi',d:'Cig badem veya ceviz 1 avuc (~25-30g) + yesil cay',b:'',bt:'',kcal:170},
-  {t:'21:00',n:'Aksam yemegi',d:'180g airfryer tavuk + salata (~80g) + zeytinyagi + Kreatin 5g',b:'bb',bt:'Kreatin',kcal:320},
-  {t:'01:00',n:'Uyku oncesi',d:'ZMA 3 kapsul - ac karnina 45 dk once',b:'bb',bt:'ZMA',kcal:0}
+  {t:'08:30',n:'Sabah',d:'Sade filtre kahve + Ester-C 1 tablet',b:'bb',bt:'Ester-C',kcal:10,p:0,k:2,y:0},
+  {t:'13:00',n:'Fabrika ogle',d:'Ana yemek et/tavuk (150-180g) + pilav 4-5 yk + salata - EKMEK YOK - TATLI YOK',b:'bx',bt:'Ucretsiz',kcal:550,p:40,k:50,y:14},
+  {t:'13:05',n:'',d:'D3 1 kapsul hemen ogle yemegiyle',b:'bb',bt:'D3',kcal:0,p:0,k:0,y:0},
+  {t:'13:06',n:'',d:'Omega-3 2 kapsul (1560mg) - yagiz ogunle birlikte',b:'bb',bt:'Omega-3',kcal:0,p:0,k:0,y:0},
+  {t:'18:30',n:'Is cikisi',d:'Cig badem veya ceviz 1 avuc (~25-30g) + yesil cay',b:'',bt:'',kcal:170,p:5,k:5,y:15},
+  {t:'21:00',n:'Aksam yemegi',d:'180g airfryer tavuk + salata (~80g) + zeytinyagi + Kreatin 5g',b:'bb',bt:'Kreatin',kcal:320,p:42,k:4,y:14},
+  {t:'01:00',n:'Uyku oncesi',d:'ZMA 3 kapsul - ac karnina 45 dk once',b:'bb',bt:'ZMA',kcal:0,p:0,k:0,y:0}
 ],
 2:[
-  {t:'08:30',n:'Sabah',d:'Sade filtre kahve + Ester-C 1 tablet',b:'bb',bt:'Ester-C',kcal:10},
-  {t:'13:00',n:'Fabrika ogle',d:'Ana protein (150-180g) + pilav 5-6 yk (~150g) - aksam idmani icin karbonhidrat sart + salata - EKMEK YOK',b:'bx',bt:'Ucretsiz',kcal:600},
-  {t:'13:05',n:'',d:'D3 1 kapsul hemen ogle yemegiyle',b:'bb',bt:'D3',kcal:0},
-  {t:'13:06',n:'',d:'Omega-3 2 kapsul (1560mg) - yagiz ogunle birlikte',b:'bb',bt:'Omega-3',kcal:0},
-  {t:'18:45',n:'Kritik ogun - idman oncesi',d:'1 buyuk muz (~120g) + Whey 1 olcek (25g) + 300ml su + 1 fincan kahve',b:'bg',bt:'Enerji',kcal:220},
-  {t:'20:00',n:'Idman esnasi',d:'BCAA 1 olcek (5-8g) 1 litre suya karistir',b:'bb',bt:'BCAA',kcal:20},
-  {t:'21:45',n:'Idman sonrasi',d:'200g airfryer tavuk + 5 yk esmer pirinc (~150g) + sebze 150g + Kreatin 5g',b:'bb',bt:'Kreatin',kcal:520},
-  {t:'01:00',n:'Uyku oncesi',d:'ZMA 3 kapsul - ac karnina 45 dk once',b:'bb',bt:'ZMA',kcal:0}
+  {t:'08:30',n:'Sabah',d:'Sade filtre kahve + Ester-C 1 tablet',b:'bb',bt:'Ester-C',kcal:10,p:0,k:2,y:0},
+  {t:'13:00',n:'Fabrika ogle',d:'Ana protein (150-180g) + pilav 5-6 yk (~150g) - aksam idmani icin karbonhidrat sart + salata - EKMEK YOK',b:'bx',bt:'Ucretsiz',kcal:600,p:42,k:60,y:14},
+  {t:'13:05',n:'',d:'D3 1 kapsul hemen ogle yemegiyle',b:'bb',bt:'D3',kcal:0,p:0,k:0,y:0},
+  {t:'13:06',n:'',d:'Omega-3 2 kapsul (1560mg) - yagiz ogunle birlikte',b:'bb',bt:'Omega-3',kcal:0,p:0,k:0,y:0},
+  {t:'18:45',n:'Kritik ogun - idman oncesi',d:'1 buyuk muz (~120g) + Whey 1 olcek (25g) + 300ml su + 1 fincan kahve',b:'bg',bt:'Enerji',kcal:220,p:26,k:30,y:2},
+  {t:'20:00',n:'Idman esnasi',d:'BCAA 1 olcek (5-8g) 1 litre suya karistir',b:'bb',bt:'BCAA',kcal:20,p:5,k:0,y:0},
+  {t:'21:45',n:'Idman sonrasi',d:'200g airfryer tavuk + 5 yk esmer pirinc (~150g) + sebze 150g + Kreatin 5g',b:'bb',bt:'Kreatin',kcal:520,p:46,k:52,y:10},
+  {t:'01:00',n:'Uyku oncesi',d:'ZMA 3 kapsul - ac karnina 45 dk once',b:'bb',bt:'ZMA',kcal:0,p:0,k:0,y:0}
 ],
 3:[
-  {t:'08:30',n:'Sabah',d:'Sade filtre kahve + Ester-C 1 tablet',b:'bb',bt:'Ester-C',kcal:10},
-  {t:'13:00',n:'Fabrika ogle',d:'Ana protein (150g) + salata veya cacik - karbonhidrati minimize et - EKMEK YOK - TATLI YOK',b:'bx',bt:'Ucretsiz',kcal:380},
-  {t:'13:05',n:'',d:'D3 1 kapsul hemen ogle yemegiyle',b:'bb',bt:'D3',kcal:0},
-  {t:'13:06',n:'',d:'Omega-3 2 kapsul (1560mg) - yagiz ogunle birlikte',b:'bb',bt:'Omega-3',kcal:0},
-  {t:'18:30',n:'Ara ogun',d:'Activia sade 1 kutu (125g) + cig kaju 10 adet (~15g)',b:'',bt:'',kcal:165},
-  {t:'21:00',n:'Aksam yemegi',d:'Dardanel light ton 1 buyuk kutu (160g) + salata ~80g + zeytinyagi + Kreatin 5g',b:'bb',bt:'Kreatin',kcal:280},
-  {t:'01:00',n:'Uyku oncesi',d:'ZMA 3 kapsul - ac karnina 45 dk once',b:'bb',bt:'ZMA',kcal:0}
+  {t:'08:30',n:'Sabah',d:'Sade filtre kahve + Ester-C 1 tablet',b:'bb',bt:'Ester-C',kcal:10,p:0,k:2,y:0},
+  {t:'13:00',n:'Fabrika ogle',d:'Ana protein (150g) + salata veya cacik - karbonhidrati minimize et - EKMEK YOK - TATLI YOK',b:'bx',bt:'Ucretsiz',kcal:380,p:38,k:18,y:14},
+  {t:'13:05',n:'',d:'D3 1 kapsul hemen ogle yemegiyle',b:'bb',bt:'D3',kcal:0,p:0,k:0,y:0},
+  {t:'13:06',n:'',d:'Omega-3 2 kapsul (1560mg) - yagiz ogunle birlikte',b:'bb',bt:'Omega-3',kcal:0,p:0,k:0,y:0},
+  {t:'18:30',n:'Ara ogun',d:'Activia sade 1 kutu (125g) + cig kaju 10 adet (~15g)',b:'',bt:'',kcal:165,p:8,k:14,y:9},
+  {t:'21:00',n:'Aksam yemegi',d:'Dardanel light ton 1 buyuk kutu (160g) + salata ~80g + zeytinyagi + Kreatin 5g',b:'bb',bt:'Kreatin',kcal:280,p:40,k:4,y:11},
+  {t:'01:00',n:'Uyku oncesi',d:'ZMA 3 kapsul - ac karnina 45 dk once',b:'bb',bt:'ZMA',kcal:0,p:0,k:0,y:0}
 ],
 4:[
-  {t:'08:30',n:'Sabah',d:'Sade filtre kahve + Ester-C 1 tablet',b:'bb',bt:'Ester-C',kcal:10},
-  {t:'13:00',n:'Fabrika ogle',d:'Ana protein (150-180g) + pilav 5-6 yk (~150g) - aksam idmani icin karbonhidrat sart + salata - EKMEK YOK',b:'bx',bt:'Ucretsiz',kcal:600},
-  {t:'13:05',n:'',d:'D3 1 kapsul hemen ogle yemegiyle',b:'bb',bt:'D3',kcal:0},
-  {t:'13:06',n:'',d:'Omega-3 2 kapsul (1560mg) - yagiz ogunle birlikte',b:'bb',bt:'Omega-3',kcal:0},
-  {t:'18:45',n:'Kritik ogun - idman oncesi',d:'1 buyuk muz (~120g) + Whey 1 olcek (25g) + 300ml su + 1 fincan kahve',b:'bg',bt:'Enerji',kcal:220},
-  {t:'20:00',n:'Idman esnasi',d:'BCAA 1 olcek (5-8g) 1 litre suya karistir',b:'bb',bt:'BCAA',kcal:20},
-  {t:'21:45',n:'Idman sonrasi',d:'200g airfryer hindi/tavuk + 4 yk makarna veya karabudgay (~120g) + sebze 150g + Kreatin 5g',b:'bb',bt:'Kreatin',kcal:500},
-  {t:'01:00',n:'Uyku oncesi',d:'ZMA 3 kapsul - ac karnina 45 dk once',b:'bb',bt:'ZMA',kcal:0}
+  {t:'08:30',n:'Sabah',d:'Sade filtre kahve + Ester-C 1 tablet',b:'bb',bt:'Ester-C',kcal:10,p:0,k:2,y:0},
+  {t:'13:00',n:'Fabrika ogle',d:'Ana protein (150-180g) + pilav 5-6 yk (~150g) - aksam idmani icin karbonhidrat sart + salata - EKMEK YOK',b:'bx',bt:'Ucretsiz',kcal:600,p:42,k:60,y:14},
+  {t:'13:05',n:'',d:'D3 1 kapsul hemen ogle yemegiyle',b:'bb',bt:'D3',kcal:0,p:0,k:0,y:0},
+  {t:'13:06',n:'',d:'Omega-3 2 kapsul (1560mg) - yagiz ogunle birlikte',b:'bb',bt:'Omega-3',kcal:0,p:0,k:0,y:0},
+  {t:'18:45',n:'Kritik ogun - idman oncesi',d:'1 buyuk muz (~120g) + Whey 1 olcek (25g) + 300ml su + 1 fincan kahve',b:'bg',bt:'Enerji',kcal:220,p:26,k:30,y:2},
+  {t:'20:00',n:'Idman esnasi',d:'BCAA 1 olcek (5-8g) 1 litre suya karistir',b:'bb',bt:'BCAA',kcal:20,p:5,k:0,y:0},
+  {t:'21:45',n:'Idman sonrasi',d:'200g airfryer hindi/tavuk + 4 yk makarna veya karabudgay (~120g) + sebze 150g + Kreatin 5g',b:'bb',bt:'Kreatin',kcal:500,p:44,k:50,y:10},
+  {t:'01:00',n:'Uyku oncesi',d:'ZMA 3 kapsul - ac karnina 45 dk once',b:'bb',bt:'ZMA',kcal:0,p:0,k:0,y:0}
 ],
 5:[
-  {t:'08:30',n:'Sabah',d:'Sade filtre kahve + Ester-C 1 tablet',b:'bb',bt:'Ester-C',kcal:10},
-  {t:'13:00',n:'Fabrika ogle',d:'En hafif protein secenegi (~130-150g) + sadece corba 1 kase + bol salata - EKMEK YOK - TATLI YOK',b:'bx',bt:'Ucretsiz',kcal:380},
-  {t:'13:05',n:'',d:'D3 1 kapsul hemen ogle yemegiyle',b:'bb',bt:'D3',kcal:0},
-  {t:'13:06',n:'',d:'Omega-3 2 kapsul (1560mg) - yagiz ogunle birlikte',b:'bb',bt:'Omega-3',kcal:0},
-  {t:'18:30',n:'Ara ogun',d:'1 yesil elma (~150g) + 1 fincan filtre kahve',b:'',bt:'',kcal:80},
-  {t:'21:00',n:'Aksam yemegi',d:'180g airfryer somon veya ton baligi 1 buyuk kutu (160g) + salata ~100g + zeytinyagi + Kreatin 5g',b:'bb',bt:'Kreatin',kcal:380},
-  {t:'00:30',n:'Uyku oncesi - ERKEN!',d:'ZMA 3 kapsul - yarin sabah 10:00 idmani var erken uyu - ac karnina 45 dk once',b:'bb',bt:'ZMA',kcal:0}
+  {t:'08:30',n:'Sabah',d:'Sade filtre kahve + Ester-C 1 tablet',b:'bb',bt:'Ester-C',kcal:10,p:0,k:2,y:0},
+  {t:'13:00',n:'Fabrika ogle',d:'En hafif protein secenegi (~130-150g) + bol salata - EKMEK YOK - TATLI YOK',b:'bx',bt:'Ucretsiz',kcal:380,p:36,k:16,y:14},
+  {t:'13:05',n:'',d:'D3 1 kapsul hemen ogle yemegiyle',b:'bb',bt:'D3',kcal:0,p:0,k:0,y:0},
+  {t:'13:06',n:'',d:'Omega-3 2 kapsul (1560mg) - yagiz ogunle birlikte',b:'bb',bt:'Omega-3',kcal:0,p:0,k:0,y:0},
+  {t:'18:30',n:'Ara ogun',d:'1 yesil elma (~150g) + 1 fincan filtre kahve',b:'',bt:'',kcal:80,p:0,k:20,y:0},
+  {t:'21:00',n:'Aksam yemegi',d:'180g airfryer somon veya ton baligi 1 buyuk kutu (160g) + salata ~100g + zeytinyagi + Kreatin 5g',b:'bb',bt:'Kreatin',kcal:380,p:44,k:4,y:18},
+  {t:'00:30',n:'Uyku oncesi - ERKEN!',d:'ZMA 3 kapsul - yarin sabah 10:00 idmani var erken uyu - ac karnina 45 dk once',b:'bb',bt:'ZMA',kcal:0,p:0,k:0,y:0}
 ],
 6:[
-  {t:'09:15',n:'Idman oncesi',d:'1 buyuk muz (~120g) + 1 fincan sade kahve',b:'bg',bt:'Enerji',kcal:120},
-  {t:'10:00',n:'Idman esnasi',d:'BCAA 1 olcek (5-8g) 1 litre suya karistir',b:'bb',bt:'BCAA',kcal:20},
-  {t:'11:30',n:'Dev kahvalti',d:'4 tam yumurta omlet + suzme peynir 2 yk (40g) + 5-6 zeytin + Whey 1 olcek + Ester-C 1 tablet',b:'bg',bt:'Protein',kcal:560},
-  {t:'16:00',n:'Ogle sonrasi',d:'150g airfryer tavuk (cig tarti) + 5 yk basmati pirinc (~150g) + D3 1 kapsul',b:'bb',bt:'D3',kcal:490},
-  {t:'16:05',n:'',d:'Omega-3 2 kapsul (1560mg) - yagiz ogunle birlikte',b:'bb',bt:'Omega-3',kcal:0},
-  {t:'20:30',n:'Aksam yemegi',d:'180g yagiz dana kiyma airfryer kofte + salata ~100g + zeytinyagi + Kreatin 5g',b:'bb',bt:'Kreatin',kcal:420},
-  {t:'01:00',n:'Uyku oncesi',d:'ZMA 3 kapsul - ac karnina 45 dk once - KALSIYUMLU GIDA YOK',b:'bb',bt:'ZMA',kcal:0}
+  {t:'09:15',n:'Idman oncesi',d:'1 buyuk muz (~120g) + 1 fincan sade kahve',b:'bg',bt:'Enerji',kcal:120,p:1,k:30,y:0},
+  {t:'10:00',n:'Idman esnasi',d:'BCAA 1 olcek (5-8g) 1 litre suya karistir',b:'bb',bt:'BCAA',kcal:20,p:5,k:0,y:0},
+  {t:'11:30',n:'Dev kahvalti',d:'4 tam yumurta omlet + suzme peynir 2 yk (40g) + 5-6 zeytin + Whey 1 olcek + Ester-C 1 tablet',b:'bg',bt:'Protein',kcal:560,p:60,k:6,y:30},
+  {t:'16:00',n:'Ogle sonrasi',d:'150g airfryer tavuk (cig tarti) + 5 yk basmati pirinc (~150g) + D3 1 kapsul',b:'bb',bt:'D3',kcal:490,p:38,k:55,y:8},
+  {t:'16:05',n:'',d:'Omega-3 2 kapsul (1560mg) - yagiz ogunle birlikte',b:'bb',bt:'Omega-3',kcal:0,p:0,k:0,y:0},
+  {t:'20:30',n:'Aksam yemegi',d:'180g yagiz dana kiyma airfryer kofte + salata ~100g + zeytinyagi + Kreatin 5g',b:'bb',bt:'Kreatin',kcal:420,p:44,k:4,y:22},
+  {t:'01:00',n:'Uyku oncesi',d:'ZMA 3 kapsul - ac karnina 45 dk once - KALSIYUMLU GIDA YOK',b:'bb',bt:'ZMA',kcal:0,p:0,k:0,y:0}
 ]
 };
 
@@ -1249,30 +1249,47 @@ function renderDD(){
   h+='<div style="flex:1;background:#333;border-radius:20px;height:5px;overflow:hidden"><div style="height:5px;border-radius:20px;background:'+(uyumPct>=80?'var(--green)':'var(--orange)')+';width:'+uyumPct+'%"></div></div>';
   h+='<span style="font-size:12px;font-weight:700;color:'+(uyumPct>=80?'var(--green)':'var(--orange)')+'">%'+uyumPct+' uyum</span></div>';
 
-  // Kalori hesabı
-  var planKcal=0;
-  meals.forEach(function(m){if(m.n&&m.kcal) planKcal+=m.kcal;});
-  var yenilenKcal=0;
+  // Kalori + makro hesabı
+  var planKcal=0,planP=0,planK=0,planY=0;
+  meals.forEach(function(m){if(m.n&&m.kcal){planKcal+=m.kcal;planP+=(m.p||0);planK+=(m.k||0);planY+=(m.y||0);}});
+  var yenilenKcal=0,yenilenP=0,yenilenK=0,yenilenY=0;
   var mi2=0;
   meals.forEach(function(m){
     if(!m.n) return;
-    if(mealLog[mi2]==='yedim'&&m.kcal) yenilenKcal+=m.kcal;
-    if(mealLog[mi2]==='atladim'&&m.kcal) yenilenKcal+=0;
-    if(mealLog[mi2]==='degistirdim'&&m.kcal) yenilenKcal+=Math.round(m.kcal*0.85);
+    var carpan=mealLog[mi2]==='yedim'?1:mealLog[mi2]==='degistirdim'?0.85:0;
+    if(carpan>0){
+      yenilenKcal+=Math.round((m.kcal||0)*carpan);
+      yenilenP+=Math.round((m.p||0)*carpan);
+      yenilenK+=Math.round((m.k||0)*carpan);
+      yenilenY+=Math.round((m.y||0)*carpan);
+    }
     mi2++;
   });
   var hedefKcal=DT[cDay]==='idman'?1800:1600;
+  var hedefP=DT[cDay]==='idman'?170:150;
   var kcalPct=Math.min(100,Math.round((yenilenKcal/hedefKcal)*100));
   var kcalRenk=yenilenKcal>hedefKcal+200?'var(--red)':yenilenKcal<hedefKcal-300?'var(--orange)':'var(--green)';
+  var pRenk=yenilenP>=hedefP?'var(--green)':yenilenP>=hedefP*0.8?'var(--orange)':'var(--red)';
 
-  h+='<div style="background:var(--card2);border-radius:10px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:12px">';
-  h+='<div style="flex:1">';
-  h+='<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+  h+='<div style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:12px">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
   h+='<span style="font-size:12px;color:var(--sub)">🔥 Kalori</span>';
-  h+='<span style="font-size:12px;font-weight:700;color:'+kcalRenk+'">'+yenilenKcal+' / '+hedefKcal+' kcal</span></div>';
-  h+='<div style="background:#333;border-radius:20px;height:5px;overflow:hidden">';
+  h+='<span style="font-size:13px;font-weight:700;color:'+kcalRenk+'">'+yenilenKcal+' / '+hedefKcal+' kcal</span></div>';
+  h+='<div style="background:#333;border-radius:20px;height:5px;overflow:hidden;margin-bottom:10px">';
   h+='<div style="height:5px;border-radius:20px;background:'+kcalRenk+';width:'+kcalPct+'%;transition:width 0.3s"></div></div>';
-  h+='<div style="font-size:11px;color:var(--sub);margin-top:3px">Plan toplamı: '+planKcal+' kcal · Hedef: '+(DT[cDay]==='idman'?'İdman günü ~1800':'Dinlenme günü ~1600')+'</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">';
+  h+='<div style="text-align:center;background:#111;border-radius:8px;padding:6px 4px">';
+  h+='<div style="font-size:10px;color:var(--sub)">Protein</div>';
+  h+='<div style="font-size:16px;font-weight:700;color:'+pRenk+'">'+yenilenP+'g</div>';
+  h+='<div style="font-size:10px;color:var(--sub)">hedef '+hedefP+'g</div></div>';
+  h+='<div style="text-align:center;background:#111;border-radius:8px;padding:6px 4px">';
+  h+='<div style="font-size:10px;color:var(--sub)">Karb</div>';
+  h+='<div style="font-size:16px;font-weight:700;color:var(--blue)">'+yenilenK+'g</div>';
+  h+='<div style="font-size:10px;color:var(--sub)">plan '+planK+'g</div></div>';
+  h+='<div style="text-align:center;background:#111;border-radius:8px;padding:6px 4px">';
+  h+='<div style="font-size:10px;color:var(--sub)">Yağ</div>';
+  h+='<div style="font-size:16px;font-weight:700;color:var(--orange)">'+yenilenY+'g</div>';
+  h+='<div style="font-size:10px;color:var(--sub)">plan '+planY+'g</div></div>';
   h+='</div></div>';
 
   var mi=0;
