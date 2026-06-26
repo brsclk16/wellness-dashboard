@@ -2929,16 +2929,39 @@ function loadCiltNot(){document.getElementById('cilt-not').value=lg('cilt_not','
 
 init();
 
-// Service Worker kayıt
+// Service Worker — otomatik güncelleme
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
     navigator.serviceWorker.register('/wellness-dashboard/sw.js')
       .then(function(reg){
-        console.log('SW kayıtlı:', reg.scope);
-      })
-      .catch(function(err){
-        console.log('SW hatası:', err);
+        // Yeni SW bulunca hemen aktive et
+        reg.addEventListener('updatefound', function(){
+          var newSW = reg.installing;
+          newSW.addEventListener('statechange', function(){
+            if(newSW.state === 'installed' && navigator.serviceWorker.controller){
+              // Yeni versiyon hazır — sayfayı sessizce yenile
+              newSW.postMessage({type:'SKIP_WAITING'});
+            }
+          });
+        });
       });
+
+    // SW güncellenince sayfayı otomatik yenile
+    var refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function(){
+      if(!refreshing){
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+
+    // SW'den güncelleme mesajı gelince yenile
+    navigator.serviceWorker.addEventListener('message', function(e){
+      if(e.data && e.data.type === 'SW_UPDATED' && !refreshing){
+        refreshing = true;
+        window.location.reload();
+      }
+    });
   });
 }
 </script>
