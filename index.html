@@ -94,6 +94,16 @@ canvas{width:100%!important}
 <div id="pa" class="pg">
   <div class="ptitle">Antrenman</div>
   <p class="psub">Guray Hypertrophy Max — Set girisleri kaydedilir</p>
+  <div id="wo-progress-bar" style="background:var(--card);border-radius:12px;padding:12px 14px;margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:13px;font-weight:600">Bugunun Antrenman</span>
+      <span id="wo-pct-label" style="font-size:13px;font-weight:700;color:var(--green)">%0</span>
+    </div>
+    <div style="background:var(--card2);border-radius:20px;height:8px;overflow:hidden">
+      <div id="wo-pct-bar" style="height:8px;border-radius:20px;background:linear-gradient(90deg,var(--blue),var(--green));width:0%;transition:width 0.4s"></div>
+    </div>
+    <div id="wo-pct-sub" style="font-size:11px;color:var(--sub);margin-top:6px">0 / 0 set girildi</div>
+  </div>
   <div class="wnav">
     <button class="wnb" onclick="wkCh(-1)">&#8249;</button>
     <span style="font-size:17px;font-weight:700" id="wl2">1. Hafta</span>
@@ -177,6 +187,17 @@ canvas{width:100%!important}
   <div class="ptitle">Takviye</div>
   <p class="psub">Gunluk zamanlama rehberi</p>
   <div class="card" id="slist"></div>
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="slbl" style="margin-bottom:0">Bugun Aldiklarim</div>
+      <span id="sup-count" style="font-size:12px;color:var(--green);font-weight:700">0/7</span>
+    </div>
+    <div style="background:var(--card2);border-radius:20px;height:6px;overflow:hidden;margin-bottom:12px">
+      <div id="sup-bar" style="height:6px;border-radius:20px;background:linear-gradient(90deg,var(--blue),var(--green));width:0%;transition:width 0.4s"></div>
+    </div>
+    <div id="sup-checks"></div>
+    <div style="font-size:11px;color:var(--sub);margin-top:8px">Her gece yarisi otomatik sifirlanir</div>
+  </div>
   <div class="card">
     <div class="slbl">Su Hedefi</div>
     <div style="font-size:28px;font-weight:700;color:var(--blue)">3.5 - 4 L / gun</div>
@@ -201,6 +222,16 @@ canvas{width:100%!important}
   </div>
 </div>
 
+<div id="pg2" class="pg">
+  <div class="ptitle">Lift Geçmişi</div>
+  <p class="psub">Ana hareketlerin haftalık ilerleme grafiği</p>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="lift-btns"></div>
+  <div class="card">
+    <div style="position:relative;height:220px"><canvas id="lift-ch"></canvas></div>
+  </div>
+  <div class="card" id="lift-stats"></div>
+</div>
+
 <nav class="nav">
   <button class="nb on" onclick="sp('g',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Gunluk
@@ -216,6 +247,9 @@ canvas{width:100%!important}
   </button>
   <button class="nb" onclick="sp('ci',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6c-1.5 1.5-3 3.5-3 6 0 1.66 1.34 3 3 3s3-1.34 3-3c0-2.5-1.5-4.5-3-6z"/></svg>Cilt
+  </button>
+  <button class="nb" onclick="sp('g2',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 8 12 13 15 21 7"/><line x1="21" y1="7" x2="21" y2="13"/><line x1="21" y1="7" x2="15" y2="7"/></svg>Lifts
   </button>
 </nav>
 
@@ -427,7 +461,9 @@ function init(){
   renderDD();
   renderWT();
   renderWD();
+  updateWoProgress();
   renderSup();
+  renderLiftBtns();
   showCilt('am',document.getElementById('cilt-am'));
   renderK();
   var now=new Date();
@@ -440,11 +476,13 @@ function init(){
 function sp(id,el){
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on');});
-  var map={g:'pg',a:'pa',k:'pk',t:'pt',ci:'pci'};
+  var map={g:'pg',a:'pa',k:'pk',t:'pt',ci:'pci',g2:'pg2'};
   document.getElementById(map[id]).classList.add('on');
   el.classList.add('on');
   if(id==='k') renderK();
   if(id==='ci'){showCilt('am',document.getElementById('cilt-am'));loadCiltNot();}
+  if(id==='g2') renderLiftChart(cLift);
+  if(id==='t') renderSupChecks();
 }
 
 function wkCh(d){
@@ -538,6 +576,7 @@ function renderWD(){
     h+='</div></div>';
   });
   document.getElementById('wdet').innerHTML=h;
+  updateWoProgress();
 }
 
 function parseSet(val){
@@ -580,6 +619,7 @@ function svS(inp){
   var s=lg(k,{});
   s[mi+'_'+si]=inp.value;
   ls(k,s);
+  updateWoProgress();
 
   // Progress vs last week
   var prevK='wo_'+cWO+'_w'+(cWk-1);
@@ -754,6 +794,144 @@ function renderSup(){
     h+='<div class="sup-row"><div class="st">'+s.t+'</div><div><div class="sn">'+s.n+'</div><div class="sd">'+s.d+'</div>'+(s.b?'<span class="bdg '+s.b+'">'+s.bt+'</span>':'')+'</div></div>';
   });
   document.getElementById('slist').innerHTML=h;
+  renderSupChecks();
+}
+
+function getTodayKey(){
+  var d=new Date();
+  return 'sup_'+d.getFullYear()+'_'+(d.getMonth()+1)+'_'+d.getDate();
+}
+
+function renderSupChecks(){
+  var key=getTodayKey();
+  var done=lg(key,[]);
+  var h='';
+  SUPS.forEach(function(s,i){
+    var checked=done.indexOf(i)>=0;
+    h+='<div onclick="toggleSup('+i+')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer">';
+    h+='<div style="width:22px;height:22px;border-radius:6px;border:2px solid '+(checked?'var(--green)':'var(--sub)')+';background:'+(checked?'var(--green)':'transparent')+';display:flex;align-items:center;justify-content:center;flex-shrink:0">';
+    if(checked) h+='<svg width="12" height="12" viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3" stroke="#000" stroke-width="2" fill="none"/></svg>';
+    h+='</div>';
+    h+='<div style="flex:1"><span style="font-size:13px;font-weight:600;color:'+(checked?'var(--green)':'var(--text)')+'">'+s.n+'</span>';
+    h+='<span style="font-size:11px;color:var(--sub);margin-left:6px">'+s.t+'</span></div></div>';
+  });
+  document.getElementById('sup-checks').innerHTML=h;
+  var pct=Math.round((done.length/SUPS.length)*100);
+  document.getElementById('sup-bar').style.width=pct+'%';
+  document.getElementById('sup-count').textContent=done.length+'/'+SUPS.length;
+  document.getElementById('sup-count').style.color=done.length===SUPS.length?'var(--green)':'var(--blue)';
+}
+
+function toggleSup(i){
+  var key=getTodayKey();
+  var done=lg(key,[]);
+  var idx=done.indexOf(i);
+  if(idx>=0) done.splice(idx,1); else done.push(i);
+  ls(key,done);
+  renderSupChecks();
+}
+
+// ---- LIFT CHART ----
+var LIFTS=[
+  {n:'Lat Pulldown',wo:'per',mi:0},
+  {n:'Leg Press',wo:'paz',mi:4},
+  {n:'Chest Press',wo:'sal',mi:0},
+  {n:'Shoulder Press',wo:'sal',mi:3},
+  {n:'Cable Row',wo:'per',mi:2},
+  {n:'Lat Pulldown (Paz)',wo:'paz',mi:1}
+];
+var cLift=0,liftCh=null;
+
+function renderLiftBtns(){
+  var c=document.getElementById('lift-btns');
+  if(!c) return;
+  c.innerHTML='';
+  LIFTS.forEach(function(l,i){
+    var b=document.createElement('button');
+    b.className='wtb'+(i===cLift?' on':'');
+    b.textContent=l.n;
+    b.onclick=function(){cLift=i;renderLiftBtns();renderLiftChart(i);};
+    c.appendChild(b);
+  });
+}
+
+function getBestSet(ss, mi){
+  var best=null;
+  for(var si=0;si<3;si++){
+    var v=ss[mi+'_'+si]||'';
+    var p=parseSet(v);
+    if(p&&(!best||p.score>best.score)) best=p;
+  }
+  return best;
+}
+
+function renderLiftChart(li){
+  var lift=LIFTS[li];
+  var labels=[],data=[];
+  for(var w=1;w<=cWk;w++){
+    labels.push(w+'.');
+    var ss=lg('wo_'+lift.wo+'_w'+w,{});
+    var best=getBestSet(ss,lift.mi);
+    data.push(best?parseFloat((best.kg).toFixed(1)):null);
+  }
+  if(liftCh) liftCh.destroy();
+  var ctx=document.getElementById('lift-ch');
+  if(!ctx) return;
+  liftCh=new Chart(ctx,{
+    type:'line',
+    data:{labels:labels,datasets:[{
+      label:lift.n,
+      data:data,
+      borderColor:'#60a5fa',
+      backgroundColor:'rgba(96,165,250,0.1)',
+      borderWidth:2.5,
+      pointRadius:5,
+      pointBackgroundColor:'#60a5fa',
+      tension:0.3,
+      fill:true,
+      spanGaps:false
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+      y:{ticks:{color:'#888',font:{size:10},callback:function(v){return v+' kg';}},grid:{color:'#222'}},
+      x:{ticks:{color:'#888',font:{size:10},maxRotation:0},grid:{display:false}}
+    }}
+  });
+  // Stats
+  var valid=data.filter(function(v){return v!==null;});
+  var statsEl=document.getElementById('lift-stats');
+  if(valid.length>=2){
+    var first=valid[0],last=valid[valid.length-1];
+    var diff=(last-first).toFixed(1);
+    var pct=Math.round(((last-first)/first)*100);
+    statsEl.innerHTML='<div class="mg" style="margin-bottom:0">'
+      +'<div class="met"><div class="ml">Başlangıç</div><div class="mv" style="color:var(--sub)">'+first+' kg</div></div>'
+      +'<div class="met"><div class="ml">En Son</div><div class="mv" style="color:var(--blue)">'+last+' kg</div></div>'
+      +'<div class="met"><div class="ml">Artış</div><div class="mv" style="color:'+(diff>0?'var(--green)':'var(--red)')+'">+'+(diff>0?diff:diff)+' kg</div></div>'
+      +'<div class="met"><div class="ml">Gelişim</div><div class="mv" style="color:'+(pct>0?'var(--green)':'var(--red)')+'">%'+pct+'</div></div>'
+      +'</div>';
+  } else {
+    statsEl.innerHTML='<div style="color:var(--sub);font-size:13px">En az 2 hafta verisi gerekli</div>';
+  }
+}
+
+// ---- ANTRENMAN PROGRESS ----
+function updateWoProgress(){
+  var wo=WOS[cWO];
+  var ss=lg('wo_'+cWO+'_w'+cWk,{});
+  var total=0,filled=0;
+  wo.mv.forEach(function(m,mi){
+    for(var si=0;si<m.s;si++){
+      total++;
+      if(ss[mi+'_'+si]) filled++;
+    }
+  });
+  var pct=total>0?Math.round((filled/total)*100):0;
+  var barEl=document.getElementById('wo-pct-bar');
+  var lblEl=document.getElementById('wo-pct-label');
+  var subEl=document.getElementById('wo-pct-sub');
+  if(barEl) barEl.style.width=pct+'%';
+  if(lblEl){lblEl.textContent='%'+pct;lblEl.style.color=pct===100?'var(--green)':pct>50?'var(--orange)':'var(--blue)';}
+  if(subEl) subEl.textContent=filled+' / '+total+' set girildi'+(pct===100?' 🎉 — Antrenman tamamlandı!':'');
 }
 
 function showCilt(tab,el){
