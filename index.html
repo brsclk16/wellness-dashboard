@@ -113,7 +113,7 @@ canvas{width:100%!important}
   <div class="card" style="margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div class="slbl" style="margin-bottom:0">💧 Su Takibi</div>
-      <span style="font-size:11px;color:var(--sub)">Hedef: 14 bardak (3.5L)</span>
+      <span style="font-size:11px;color:var(--sub)">Hedef: 17 bardak (3.5L)</span>
     </div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
       <button onclick="suDegistir(-1)" style="width:40px;height:40px;border-radius:50%;background:var(--card2);border:none;color:var(--text);font-size:22px;cursor:pointer;flex-shrink:0">−</button>
@@ -661,18 +661,18 @@ function suDegistir(delta){
 
 function renderSu(){
   var miktar=lg(getSuKey(),0);
-  var hedef=14;
+  var hedef=17;
   var pct=Math.min(100,Math.round((miktar/hedef)*100));
   var sayiEl=document.getElementById('su-sayi');
   var barEl=document.getElementById('su-bar');
   var durumEl=document.getElementById('su-durum');
   if(!sayiEl) return;
   sayiEl.textContent=miktar;
-  sayiEl.style.color=miktar>=hedef?'var(--green)':miktar>=10?'var(--orange)':'var(--blue)';
+  sayiEl.style.color=miktar>=hedef?'var(--green)':miktar>=12?'var(--orange)':'var(--blue)';
   barEl.style.width=pct+'%';
-  var ml=miktar*250;
+  var ml=miktar*200;
   var txt=miktar===0?'Henüz su içmedin — hadi başla!':
-    miktar<7?(ml+'ml içildi · '+(hedef-miktar)+' bardak kaldı'):
+    miktar<8?(ml+'ml içildi · '+(hedef-miktar)+' bardak kaldı'):
     miktar<hedef?(ml+'ml içildi · Hedefe yaklaşıyorsun 👍'):
     '🎉 Hedef tamamlandı! '+ml+'ml';
   durumEl.textContent=txt;
