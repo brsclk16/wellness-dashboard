@@ -892,6 +892,42 @@ function init(){
   renderSu();
   renderUyku();
   renderOlcGrafikBtns();
+
+  // Saate göre otomatik sekme seç
+  var saat=new Date().getHours();
+  var gunTip=DT[cDay];
+  var navBtnler=document.querySelectorAll('.nb');
+  var hedefSekme='g'; // default: günlük plan
+
+  if(saat>=6 && saat<9){
+    // Sabah erken — günlük plan (uyku/enerji girişi için)
+    hedefSekme='g';
+  } else if(saat>=9 && saat<12 && gunTip==='idman'){
+    // Sabah idman saati (Paz/Cmt) — antrenman
+    hedefSekme='a';
+  } else if(saat>=12 && saat<14){
+    // Öğle — günlük plan (öğün takibi)
+    hedefSekme='g';
+  } else if(saat>=18 && saat<22 && gunTip==='idman'){
+    // Akşam idman saati (Sal/Per) — antrenman
+    hedefSekme='a';
+  } else if(saat>=22 || saat<2){
+    // Gece — takviye (ZMA hatırlatıcısı)
+    hedefSekme='t';
+  } else {
+    hedefSekme='g';
+  }
+
+  // Sekmeyi aktif et
+  var map={g:'pg',a:'pa',k:'pk',t:'pt',ci:'pci',g2:'pg2',alis:'palis'};
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
+  document.getElementById(map[hedefSekme]).classList.add('on');
+  // Nav butonunu aktif et
+  var nbMap={g:0,a:1,k:2,t:3,ci:4,g2:5,alis:6};
+  navBtnler.forEach(function(b){b.classList.remove('on');});
+  if(navBtnler[nbMap[hedefSekme]]) navBtnler[nbMap[hedefSekme]].classList.add('on');
+  if(hedefSekme==='k') renderOlcGrafik();
+  if(hedefSekme==='t') renderSupChecks();
   var simdi=new Date();
   if(simdi.getDay()===0 && simdi.getHours()>=18){
     var ozetKey='hafta_ozet_gosterildi_'+cWk;
@@ -2183,7 +2219,7 @@ function renderK(){
     }
     lh+='</div>';
   });
-  document.getElementById('klog').innerHTML=lh||'<div style="color:#888;font-size:13px;padding:8px 0">Henüz giriş yok.</div>';
+  document.getElementById('klog').innerHTML=lh||'<div style="display:flex;flex-direction:column;align-items:center;padding:20px 0;gap:8px"><div style="font-size:32px">⚖️</div><div style="font-size:13px;color:var(--sub);text-align:center">Henüz kilo girişi yok<br><span style="font-size:12px">Her hafta Pazar sabahı kilo gir</span></div></div>';
 
   // Bel/boy oranı
   var olcLatest=olcLog.length?olcLog[olcLog.length-1]:null;
@@ -2210,17 +2246,26 @@ function renderK(){
   for(var i=0;i<12;i++) target.push(+(88-(13/12)*(i+1)).toFixed(1));
   var actual=new Array(12).fill(null);
   log.forEach(function(x){if(x.w>=1&&x.w<=12) actual[x.w-1]=x.k;});
+  var hedefCizgi=new Array(12).fill(75);
   if(kCh) kCh.destroy();
   kCh=new Chart(document.getElementById('kch'),{
     type:'line',
     data:{labels:labels,datasets:[
-      {label:'Hedef',data:target,borderColor:'#3b5ea6',borderWidth:1.5,borderDash:[4,3],pointRadius:0,tension:0.3,fill:false},
-      {label:'Gerçek',data:actual,borderColor:'#4ade80',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#4ade80',tension:0.3,fill:false,spanGaps:false}
+      {label:'Hedef Seyir',data:target,borderColor:'rgba(10,132,255,0.35)',borderWidth:1.5,borderDash:[4,3],pointRadius:0,tension:0.3,fill:false},
+      {label:'75 kg Hedef',data:hedefCizgi,borderColor:'rgba(255,69,58,0.6)',borderWidth:1.5,borderDash:[6,4],pointRadius:0,tension:0,fill:false},
+      {label:'Gerçek',data:actual,borderColor:'var(--green)',backgroundColor:'rgba(48,209,88,0.08)',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'var(--green)',tension:0.3,fill:true,spanGaps:false}
     ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
-      y:{min:73,max:90,ticks:{color:'#888',font:{size:10},callback:function(v){return v+' kg';}},grid:{color:'#222'}},
-      x:{ticks:{color:'#888',font:{size:9},maxRotation:0},grid:{display:false}}
-    }}
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:true,labels:{color:'#666',font:{size:10},boxWidth:20,padding:10}},
+        annotation:{annotations:{hedefLine:{type:'line',yMin:75,yMax:75,borderColor:'rgba(255,69,58,0.4)',borderWidth:1}}}
+      },
+      scales:{
+        y:{min:73,max:90,ticks:{color:'#666',font:{size:10},callback:function(v){return v+' kg';}},grid:{color:'rgba(255,255,255,0.04)'}},
+        x:{ticks:{color:'#666',font:{size:9},maxRotation:0},grid:{display:false}}
+      }
+    }
   });
 }
 
@@ -2560,8 +2605,18 @@ function renderLiftChart(li){
     bodyData.push(kiloEntry?kiloEntry.k:null);
   }
 
-  if(liftCh) liftCh.destroy();
-  var ctx=document.getElementById('lift-ch');
+  // Boş durum kontrolü
+  var hasData=liftData.some(function(v){return v!==null;});
+  if(!hasData){
+    if(liftCh){liftCh.destroy();liftCh=null;}
+    ctx.parentElement.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;gap:8px">'
+      +'<div style="font-size:36px">🏋️</div>'
+      +'<div style="font-size:14px;font-weight:600;color:var(--text2)">Henüz veri yok</div>'
+      +'<div style="font-size:12px;color:var(--sub);text-align:center;max-width:220px">Antrenman sekmesinde set girişi yaptıkça grafik burada belirecek</div>'
+      +'</div>';
+    if(statsEl) statsEl.innerHTML='';
+    return;
+  }
   if(!ctx) return;
   liftCh=new Chart(ctx,{
     type:'line',
