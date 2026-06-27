@@ -1829,10 +1829,14 @@ function wkCh(d){
   cWk=Math.max(1,Math.min(12,cWk+d));
   ls('fw',cWk);
   upWL();
+  renderWT();
   renderWD();
+  renderWoPlan();
+  updateWoProgress();
   renderK();
   renderSu();
   renderUyku();
+  renderGunlukOzet();
 }
 
 function upWL(){
@@ -2387,28 +2391,27 @@ function svS2(inp){
   var s=lg(k,{});
   var key=mi+'_'+si;
 
-  // Mevcut değeri parse et
+  // Mevcut kaydedilmiş değeri parse et
   var cur=parseSet(s[key]||'');
-  var kgVal=cur?cur.kg:'';
-  var repVal=cur?cur.rep:'';
+  var kgVal=cur?String(cur.kg):'';
+  var repVal=cur?String(cur.rep):'';
 
-  // Hangi field güncellendiğini bul
-  if(field==='kg') kgVal=inp.value;
-  else repVal=inp.value;
+  // Güncellenen field'i al
+  if(field==='kg') kgVal=inp.value.trim();
+  else repVal=inp.value.trim();
 
-  // Her iki değer de doluysa kaydet
-  if(kgVal!==''&&repVal!==''){
+  // İkisi de doluysa kaydet, yoksa sil
+  if(kgVal!==''&&repVal!==''&&!isNaN(parseFloat(kgVal))&&!isNaN(parseFloat(repVal))){
     s[key]=kgVal+'x'+repVal;
-  } else if(kgVal!==''||repVal!==''){
-    s[key]=kgVal+'x'+repVal; // Eksik olsa da kaydet
-  } else {
+  } else if(kgVal===''&&repVal===''){
     delete s[key];
   }
+  // Biri boşsa kaydetme — kullanıcı hâlâ giriyor
   ls(k,s);
   updateWoProgress();
 
-  // Geçen haftayla kıyasla
-  if(kgVal!==''&&repVal!==''){
+  // İkisi de dolduğunda RIR hesabı yap
+  if(kgVal!==''&&repVal!==''&&!isNaN(parseFloat(kgVal))&&!isNaN(parseFloat(repVal))){
     var fullVal=kgVal+'x'+repVal;
     var prevK='wo_'+cWO+'_w'+(cWk-1);
     var prev=lg(prevK,{});
@@ -2443,10 +2446,11 @@ function svS2(inp){
       // Border rengini güncelle
       var borderCol=prog==='green'?'var(--green)':prog==='yellow'?'var(--orange)':prog==='red'?'var(--red)':'var(--border2)';
       var inputs=document.querySelectorAll('[data-mi="'+mi+'"][data-si="'+si+'"]');
-      inputs.forEach(function(i){i.style.borderColor=borderCol;});
+      inputs.forEach(function(inp2){inp2.style.borderColor=borderCol;});
     }
   }
 }
+
 
 function svS(inp){
   var mi=inp.dataset.mi,si=inp.dataset.si,k='wo_'+cWO+'_w'+cWk;
