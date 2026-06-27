@@ -2391,62 +2391,62 @@ function svS2(inp){
   var s=lg(k,{});
   var key=mi+'_'+si;
 
-  // Mevcut kaydedilmiş değeri parse et
-  var cur=parseSet(s[key]||'');
-  var kgVal=cur?String(cur.kg):'';
-  var repVal=cur?String(cur.rep):'';
+  // Aynı set'in diğer input'unu bul
+  var otherField=field==='kg'?'rep':'kg';
+  var otherInp=document.querySelector('[data-mi="'+mi+'"][data-si="'+si+'"][data-field="'+otherField+'"]');
+  var otherVal=otherInp?otherInp.value.trim():'';
+  var thisVal=inp.value.trim();
 
-  // Güncellenen field'i al
-  if(field==='kg') kgVal=inp.value.trim();
-  else repVal=inp.value.trim();
+  var kgVal=field==='kg'?thisVal:otherVal;
+  var repVal=field==='rep'?thisVal:otherVal;
 
-  // İkisi de doluysa kaydet, yoksa sil
+  // İkisi de doluysa tam format, biri doluysa eksik kaydet
   if(kgVal!==''&&repVal!==''&&!isNaN(parseFloat(kgVal))&&!isNaN(parseFloat(repVal))){
     s[key]=kgVal+'x'+repVal;
-  } else if(kgVal===''&&repVal===''){
+  } else if(kgVal!==''&&!isNaN(parseFloat(kgVal))){
+    s[key]=kgVal+'x';
+  } else if(repVal!==''&&!isNaN(parseFloat(repVal))){
+    s[key]='x'+repVal;
+  } else {
     delete s[key];
   }
-  // Biri boşsa kaydetme — kullanıcı hâlâ giriyor
   ls(k,s);
   updateWoProgress();
 
-  // İkisi de dolduğunda RIR hesabı yap
+  // İkisi de doluysa RIR hesapla
   if(kgVal!==''&&repVal!==''&&!isNaN(parseFloat(kgVal))&&!isNaN(parseFloat(repVal))){
     var fullVal=kgVal+'x'+repVal;
-    var prevK='wo_'+cWO+'_w'+(cWk-1);
-    var prev=lg(prevK,{});
-    var prevVal=prev[key];
+    var prevSS=lg('wo_'+cWO+'_w'+(cWk-1),{});
+    var prevVal=prevSS[key]||'';
     var prog=getProgress(fullVal,prevVal);
+    var borderCol=prog==='green'?'var(--green)':prog==='yellow'?'var(--orange)':prog==='red'?'var(--red)':'var(--border2)';
+
+    // Border güncelle
+    [inp, otherInp].forEach(function(el){if(el) el.style.borderColor=borderCol;});
+
+    // Ok işareti
     var ok=document.getElementById('ok_'+mi+'_'+si);
     if(ok){
-      if(prog==='green'){ok.textContent='↑';ok.style.color='var(--green)';}
-      else if(prog==='yellow'){ok.textContent='→';ok.style.color='var(--orange)';}
-      else if(prog==='red'){ok.textContent='↓';ok.style.color='var(--red)';}
-      else{ok.textContent='✓';ok.style.color='var(--green)';}
+      ok.textContent=prog==='green'?'↑':prog==='yellow'?'→':prog==='red'?'↓':'✓';
+      ok.style.color=prog==='green'?'var(--green)':prog==='yellow'?'var(--orange)':prog==='red'?'var(--red)':'var(--green)';
       ok.style.opacity='1';
-      setTimeout(function(){ok.style.opacity='0';},2000);
+      setTimeout(function(){ok.style.opacity='0';},2500);
     }
 
-    // 1RM ve ilerleme bilgisi
-    var parsed=parseSet(fullVal);
+    // RIR hesapla
     var infoEl=document.getElementById('prog_'+mi+'_'+si);
-    if(infoEl&&parsed){
-      var calc=calcProgression(parsed.kg,parsed.rep);
+    if(infoEl){
+      var calc=calcProgression(parseFloat(kgVal),parseFloat(repVal));
       if(calc.warn){
         infoEl.innerHTML='<span style="color:var(--orange)">⚠ '+calc.warn+'</span>';
       } else {
         infoEl.innerHTML=
           '<span style="color:var(--sub)">1RM: ~'+calc.rm+' kg</span>'+
-          '&nbsp;·&nbsp;<span style="color:var(--green)">RIR 1: '+calc.rir1+' kg×6</span>'+
-          '&nbsp;·&nbsp;<span style="color:var(--red)">Tükeniş: '+calc.tukenis+' kg×6</span>'+
-          '&nbsp;·&nbsp;<span style="color:var(--blue)">Sonraki: '+calc.nextStep+' kg×6</span>';
+          ' · <span style="color:var(--green)">RIR 1: '+calc.rir1+' kg×6</span>'+
+          ' · <span style="color:var(--red)">Tükeniş: '+calc.tukenis+' kg×6</span>'+
+          ' · <span style="color:var(--blue)">Sonraki: '+calc.nextStep+' kg×6</span>';
       }
       infoEl.style.display='block';
-
-      // Border rengini güncelle
-      var borderCol=prog==='green'?'var(--green)':prog==='yellow'?'var(--orange)':prog==='red'?'var(--red)':'var(--border2)';
-      var inputs=document.querySelectorAll('[data-mi="'+mi+'"][data-si="'+si+'"]');
-      inputs.forEach(function(inp2){inp2.style.borderColor=borderCol;});
     }
   }
 }
