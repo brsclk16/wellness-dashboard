@@ -2603,17 +2603,23 @@ function renderK(){
 }
 
 function saveOlcu(){
-  var bel=document.getElementById('olc-bel').value;
-  var boyun=document.getElementById('olc-boyun').value;
-  var gogus=document.getElementById('olc-gogus').value;
-  var kalca=document.getElementById('olc-kalca').value;
-  var kol=document.getElementById('olc-kol').value;
+  var bel=document.getElementById('olc-bel').value.trim();
+  var boyun=document.getElementById('olc-boyun').value.trim();
+  var gogus=document.getElementById('olc-gogus').value.trim();
+  var kalca=document.getElementById('olc-kalca').value.trim();
+  var kol=document.getElementById('olc-kol').value.trim();
   if(!bel&&!boyun&&!gogus&&!kalca&&!kol) return;
   var olcLog=lg('olc_log',[]);
   var idx=-1;
   for(var i=0;i<olcLog.length;i++){if(olcLog[i].w===cWk){idx=i;break;}}
-  var entry={w:cWk,bel:bel,boyun:boyun,gogus:gogus,kalca:kalca,kol:kol};
-  if(idx>=0) olcLog[idx]=entry; else olcLog.push(entry);
+  // Mevcut kaydı al, sadece dolu alanları güncelle
+  var mevcut=idx>=0?olcLog[idx]:{w:cWk};
+  if(bel) mevcut.bel=bel;
+  if(boyun) mevcut.boyun=boyun;
+  if(gogus) mevcut.gogus=gogus;
+  if(kalca) mevcut.kalca=kalca;
+  if(kol) mevcut.kol=kol;
+  if(idx>=0) olcLog[idx]=mevcut; else olcLog.push(mevcut);
   ls('olc_log',olcLog);
   document.getElementById('olc-bel').value='';
   document.getElementById('olc-boyun').value='';
@@ -2622,7 +2628,7 @@ function saveOlcu(){
   document.getElementById('olc-kol').value='';
   renderK();
   renderKompo();
-  alert('Ölçüler kaydedildi!');
+  alert('✓ Kaydedildi! Bel: '+(mevcut.bel||'—')+' Boyun: '+(mevcut.boyun||'—'));
 }
 
 // ---- NAVY METHOD VE KOMPOZİSYON ----
