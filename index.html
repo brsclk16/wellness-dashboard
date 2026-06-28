@@ -2621,6 +2621,7 @@ function saveOlcu(){
   document.getElementById('olc-kalca').value='';
   document.getElementById('olc-kol').value='';
   renderK();
+  renderKompo();
   alert('Ölçüler kaydedildi!');
 }
 
@@ -2655,16 +2656,24 @@ function renderKompo(){
     var kilo=null;
     for(var i=0;i<kiloLog.length;i++){if(kiloLog[i].w===w){kilo=kiloLog[i].k;break;}}
 
-    if(olc&&olc.bel&&olc.boyun&&kilo){
-      var yag=navyYagOrani(olc.bel,olc.boyun,boy);
-      if(yag!==null){
-        var yagKg=(kilo*yag/100);
-        var kasKg=kilo-yagKg;
-        labels.push(w+'.');
-        yagData.push(parseFloat(yag.toFixed(1)));
-        kasData.push(parseFloat(kasKg.toFixed(1)));
-        yagKgData.push(parseFloat(yagKg.toFixed(1)));
-        enSonYag=yag; enSonKas=kasKg; enSonKilo=kilo;
+    if(olc&&olc.bel&&olc.boyun){
+      // Aynı hafta kilo yoksa en son kiloyu kullan
+      if(!kilo){
+        for(var j=kiloLog.length-1;j>=0;j--){
+          if(kiloLog[j].k){kilo=kiloLog[j].k;break;}
+        }
+      }
+      if(kilo){
+        var yag=navyYagOrani(olc.bel,olc.boyun,boy);
+        if(yag!==null){
+          var yagKg=(kilo*yag/100);
+          var kasKg=kilo-yagKg;
+          labels.push(w+'.');
+          yagData.push(parseFloat(yag.toFixed(1)));
+          kasData.push(parseFloat(kasKg.toFixed(1)));
+          yagKgData.push(parseFloat(yagKg.toFixed(1)));
+          enSonYag=yag; enSonKas=kasKg; enSonKilo=kilo;
+        }
       }
     }
   }
